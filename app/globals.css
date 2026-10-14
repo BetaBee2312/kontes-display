@@ -1,0 +1,215 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/*
+|--------------------------------------------------------------------------
+| REACT SELECT - EVENT
+|--------------------------------------------------------------------------
+*/
+
+.event-select__control {
+  min-height: 48px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.event-select__control:hover {
+  border-color: #94a3b8 !important;
+}
+
+.event-select__control--is-focused {
+  border-color: #3b82f6 !important;
+  box-shadow:
+    0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| INPUT
+|--------------------------------------------------------------------------
+*/
+
+.event-select__input-container {
+  color: #0f172a !important;
+}
+
+.event-select__input-container input {
+  color: #0f172a !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| PLACEHOLDER
+|--------------------------------------------------------------------------
+*/
+
+.event-select__placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| VALUE YANG TERPILIH
+|--------------------------------------------------------------------------
+*/
+
+.event-select__single-value {
+  color: #0f172a !important;
+  opacity: 1 !important;
+  -webkit-text-fill-color: #0f172a !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| MENU
+|--------------------------------------------------------------------------
+*/
+
+.event-select__menu {
+  z-index: 9999 !important;
+  margin-top: 6px !important;
+  overflow: hidden !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.12) !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| MENU LIST
+|--------------------------------------------------------------------------
+*/
+
+.event-select__menu-list {
+  padding: 6px !important;
+  background: #ffffff !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| OPTION NORMAL
+|--------------------------------------------------------------------------
+*/
+
+.event-select__option {
+  padding: 11px 14px !important;
+  border-radius: 9px !important;
+  margin-bottom: 2px !important;
+
+  background: #ffffff !important;
+
+  color: #0f172a !important;
+  opacity: 1 !important;
+
+  -webkit-text-fill-color: #0f172a !important;
+
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| OPTION HOVER / FOCUS
+|--------------------------------------------------------------------------
+*/
+
+.event-select__option--is-focused {
+  background: #eff6ff !important;
+
+  color: #1d4ed8 !important;
+
+  -webkit-text-fill-color: #1d4ed8 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| OPTION TERPILIH
+|--------------------------------------------------------------------------
+*/
+
+.event-select__option--is-selected {
+  background: #2563eb !important;
+
+  color: #ffffff !important;
+
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| CREATE OPTION
+|--------------------------------------------------------------------------
+*/
+
+.event-select__option.event-select__option--is-focused {
+  color: #2563eb !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| INDICATOR
+|--------------------------------------------------------------------------
+*/
+
+.event-select__dropdown-indicator {
+  color: #64748b !important;
+}
+
+.event-select__dropdown-indicator:hover {
+  color: #2563eb !important;
+}
+
+.event-select__clear-indicator {
+  color: #94a3b8 !important;
+}
+
+.event-select__clear-indicator:hover {
+  color: #ef4444 !important;
+}
+
+/*
+|--------------------------------------------------------------------------
+| NO OPTIONS
+|--------------------------------------------------------------------------
+*/
+
+.event-select__menu-notice {
+  padding: 12px 14px !important;
+  color: #64748b !important;
+  background: #ffffff !important;
+}
