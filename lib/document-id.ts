@@ -1,10 +1,12 @@
+import type { RowDataPacket } from "mysql2";
 import type { Pool } from "mysql2/promise";
 
+interface DocumentIdRow extends RowDataPacket {
+  id: string;
+}
+
 function escapeRegExp(value: string) {
-  return value.replace(
-    /[.*+?^${}()|[\]\\]/g,
-    "\\$&"
-  );
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export async function generateDocumentId(
@@ -16,22 +18,16 @@ export async function generateDocumentId(
 ) {
   const date = tanggal.replaceAll("-", "");
 
-  const baseId =
-    `${kodeCabang}_${date}_${kodeEvent}`;
+  const baseId = `${kodeCabang}_${date}_${kodeEvent}`;
 
-  const [rows] = await db.query<
-    { id: string }[]
-  >(
+  const [rows] = await db.query<DocumentIdRow[]>(
     `
       SELECT id
       FROM \`${tableName}\`
       WHERE id = ?
          OR id LIKE ?
     `,
-    [
-      baseId,
-      `${baseId}_%`,
-    ]
+    [baseId, `${baseId}_%`]
   );
 
   if (rows.length === 0) {
@@ -51,15 +47,12 @@ export async function generateDocumentId(
       continue;
     }
 
-    const sequence =
-      Number(match[1]);
+    const sequence = Number(match[1]);
 
     if (sequence > maxSequence) {
       maxSequence = sequence;
     }
   }
 
-  return `${baseId}_${String(
-    maxSequence + 1
-  ).padStart(3, "0")}`;
+  return `${baseId}_${String(maxSequence + 1).padStart(3, "0")}`;
 }
