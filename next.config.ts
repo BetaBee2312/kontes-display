@@ -1,3 +1,4 @@
+
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -8,22 +9,12 @@ const nextConfig: NextConfig = {
     "gudang.ym-marketing-online.sbs",
   ],
 
-  /* config options here */
   experimental: {
     agentFeedback: true,
   },
 
   cacheComponents: true,
   partialPrefetching: true,
-
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
-  },
 };
 
 export default nextConfig;
