@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import type { RowDataPacket } from "mysql2";
 
 import db from "@/lib/db";
-import {
-  getCabangTableName,
-} from "@/lib/cabang-table";
+import { getCabangTableName } from "@/lib/cabang-table";
 
 import RiwayatClient from "./RiwayatClient";
 
@@ -13,12 +12,12 @@ type Cabang = {
   nama_cabang: string;
 };
 
-type Riwayat = {
+interface Riwayat extends RowDataPacket {
   id: string;
   event: string;
   tanggal: string;
   foto: string;
-};
+}
 
 export default function RiwayatPage(
   props: {
