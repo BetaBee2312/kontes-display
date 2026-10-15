@@ -61,7 +61,7 @@ export default function Home() {
 
             {/* MASTER PANEL */}
             <Link
-              href="/master"
+              href="/admin"
               className="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-slate-400 hover:shadow-md"
             >
               <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-slate-100">
