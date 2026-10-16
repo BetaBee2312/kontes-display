@@ -30,7 +30,6 @@ export type DocumentationRow = {
   id: string;
   nama_event: string;
   tanggal: string;
-  waktu_upload: string | null;
   foto: string | null;
 };
 
@@ -104,19 +103,18 @@ export async function getDocumentationUnionSql(): Promise<string | null> {
 
   if (tableNames.length === 0) return null;
 
-  // Table per branch may record upload time under different column names.
-  // Inspect INFORMATION_SCHEMA and use the first existing timestamp column.
-  const timestampCandidates = ["created_at", "timestamp", "uploaded_at", "waktu_upload", "created_on", "upload_timestamp", "timestamp_upload", "created_time"];
-
   return tableNames.map((tableName) => {
     const kode = tableName.slice(3);
-    const cols = columnsByTable.get(tableName)!;
-    const timestampColumn = timestampCandidates.find((name) => cols.has(name));
-    const timestampExpression = timestampColumn
-      ? `CAST(\`${timestampColumn}\` AS CHAR)`
-      : `CAST(tanggal AS CHAR)`;
-    // Table and column identifiers come from INFORMATION_SCHEMA and allow-listed names.
-    return `SELECT '${kode}' AS kode_cabang, CAST(id AS CHAR) AS id, CAST(event AS CHAR) AS nama_event, DATE_FORMAT(tanggal, '%Y-%m-%d') AS tanggal, ${timestampExpression} AS waktu_upload, foto FROM \`${tableName}\``;
+    // Standardize every text column to the same charset and collation before UNION.
+    // Cabang tables may have been created at different times with different collations.
+    // Both the identifier and table name were validated from INFORMATION_SCHEMA.
+    return `SELECT
+      CAST('${kode}' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS kode_cabang,
+      CAST(id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS id,
+      CAST(event AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS nama_event,
+      CAST(DATE_FORMAT(tanggal, '%Y-%m-%d') AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS tanggal,
+      CAST(foto AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS foto
+      FROM \`${tableName}\``;
   }).join(" UNION ALL ");
 }
 
@@ -293,8 +291,7 @@ export async function getReportStats(
 
 export async function getDocumentationRows(
   filters: ReportFilters,
-  unionSql: string | null,
-  limit?: number
+  unionSql: string | null
 ): Promise<DocumentationRow[]> {
   if (!unionSql) return [];
 
@@ -307,15 +304,13 @@ export async function getDocumentationRows(
       d.id,
       d.nama_event,
       d.tanggal,
-      d.waktu_upload,
       d.foto
     FROM (${unionSql}) d
     LEFT JOIN tb_cabang c
       ON CAST(c.kode_cabang AS CHAR) = d.kode_cabang
     ${whereSql}
-    ORDER BY d.tanggal DESC, d.waktu_upload DESC, d.kode_cabang ASC, d.id DESC
-    ${Number.isInteger(limit) && Number(limit) > 0 ? "LIMIT ?" : ""}
-  `, Number.isInteger(limit) && Number(limit) > 0 ? [...values, Number(limit)] : values);
+    ORDER BY d.tanggal DESC, d.kode_cabang ASC, d.id DESC
+  `, values);
 
   return (rows as DocumentationRow[]).map((row) => ({
     ...row,
@@ -325,7 +320,6 @@ export async function getDocumentationRows(
     id: String(row.id),
     nama_event: String(row.nama_event || "(Tanpa nama event)"),
     tanggal: String(row.tanggal).slice(0, 10),
-    waktu_upload: row.waktu_upload ? String(row.waktu_upload) : String(row.tanggal),
     foto: row.foto ? String(row.foto) : null,
   }));
 }
