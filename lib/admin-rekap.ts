@@ -30,6 +30,7 @@ export type DocumentationRow = {
   id: string;
   nama_event: string;
   tanggal: string;
+  waktu_upload: string | null;
   foto: string | null;
 };
 
@@ -103,16 +104,25 @@ export async function getDocumentationUnionSql(): Promise<string | null> {
 
   if (tableNames.length === 0) return null;
 
+  // Table per branch may record upload time under different column names.
+  // Inspect INFORMATION_SCHEMA and use the first existing timestamp column.
+  const timestampCandidates = ["created_at", "timestamp", "uploaded_at", "waktu_upload", "created_on", "upload_timestamp", "timestamp_upload", "created_time"];
+
   return tableNames.map((tableName) => {
     const kode = tableName.slice(3);
-    // Standardize every text column to the same charset and collation before UNION.
-    // Cabang tables may have been created at different times with different collations.
-    // Both the identifier and table name were validated from INFORMATION_SCHEMA.
+    const cols = columnsByTable.get(tableName)!;
+    const timestampColumn = timestampCandidates.find((name) => cols.has(name));
+    const timestampExpression = timestampColumn
+      ? `CAST(\`${timestampColumn}\` AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci`
+      : `CAST(tanggal AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci`;
+    // Force every text expression to one explicit collation before UNION ALL.
+    // Table and column identifiers come from INFORMATION_SCHEMA and allow-listed names.
     return `SELECT
       CAST('${kode}' AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS kode_cabang,
       CAST(id AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS id,
       CAST(event AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS nama_event,
       CAST(DATE_FORMAT(tanggal, '%Y-%m-%d') AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS tanggal,
+      ${timestampExpression} AS waktu_upload,
       CAST(foto AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS foto
       FROM \`${tableName}\``;
   }).join(" UNION ALL ");
@@ -150,7 +160,7 @@ export async function getEventOptions(unionSql: string | null): Promise<string[]
     const [docEvents] = await db.query(`
       SELECT DISTINCT nama_event
       FROM (${unionSql}) docs
-      WHERE TRIM(COALESCE(nama_event, '')) <> ''
+      WHERE TRIM(COALESCE(nama_event, _utf8mb4'' COLLATE utf8mb4_unicode_ci)) <> _utf8mb4'' COLLATE utf8mb4_unicode_ci
       ORDER BY nama_event ASC
     `);
     for (const row of docEvents as EventRow[]) {
@@ -183,7 +193,7 @@ function buildWhere(filters: ReportFilters) {
     values.push(filters.kodeCabang);
   }
   if (filters.event) {
-    conditions.push("LOWER(d.nama_event) = LOWER(?)");
+    conditions.push("LOWER(d.nama_event) COLLATE utf8mb4_unicode_ci = LOWER(CONVERT(? USING utf8mb4)) COLLATE utf8mb4_unicode_ci");
     values.push(filters.event);
   }
 
@@ -234,12 +244,12 @@ export async function getReportAggregateRows(
   } else if (filters.mode === "branch") {
     query = `
       SELECT d.kode_cabang AS kode_cabang,
-        COALESCE(c.nama_cabang, d.kode_cabang) AS nama_cabang,
+        COALESCE(CONVERT(c.nama_cabang USING utf8mb4) COLLATE utf8mb4_unicode_ci, CONVERT(d.kode_cabang USING utf8mb4) COLLATE utf8mb4_unicode_ci) COLLATE utf8mb4_unicode_ci AS nama_cabang,
         COUNT(*) AS total_dokumentasi,
         COUNT(DISTINCT d.nama_event) AS jumlah_event,
         COUNT(DISTINCT d.tanggal) AS jumlah_hari
       FROM (${unionSql}) d
-      LEFT JOIN tb_cabang c ON CAST(c.kode_cabang AS CHAR) = d.kode_cabang
+      LEFT JOIN tb_cabang c ON CAST(c.kode_cabang AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci = d.kode_cabang
       ${whereSql}
       GROUP BY d.kode_cabang, c.nama_cabang
       ORDER BY nama_cabang ASC
@@ -247,12 +257,12 @@ export async function getReportAggregateRows(
   } else {
     query = `
       SELECT d.kode_cabang AS kode_cabang,
-        COALESCE(c.nama_cabang, d.kode_cabang) AS nama_cabang,
+        COALESCE(CONVERT(c.nama_cabang USING utf8mb4) COLLATE utf8mb4_unicode_ci, CONVERT(d.kode_cabang USING utf8mb4) COLLATE utf8mb4_unicode_ci) COLLATE utf8mb4_unicode_ci AS nama_cabang,
         d.nama_event AS nama_event,
         COUNT(*) AS total_dokumentasi,
         COUNT(DISTINCT d.tanggal) AS jumlah_hari
       FROM (${unionSql}) d
-      LEFT JOIN tb_cabang c ON CAST(c.kode_cabang AS CHAR) = d.kode_cabang
+      LEFT JOIN tb_cabang c ON CAST(c.kode_cabang AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci = d.kode_cabang
       ${whereSql}
       GROUP BY d.kode_cabang, c.nama_cabang, d.nama_event
       ORDER BY nama_cabang ASC, nama_event ASC
@@ -291,7 +301,8 @@ export async function getReportStats(
 
 export async function getDocumentationRows(
   filters: ReportFilters,
-  unionSql: string | null
+  unionSql: string | null,
+  limit?: number
 ): Promise<DocumentationRow[]> {
   if (!unionSql) return [];
 
@@ -299,18 +310,20 @@ export async function getDocumentationRows(
   const [rows] = await db.query(`
     SELECT
       d.kode_cabang,
-      COALESCE(c.nama_cabang, d.kode_cabang) AS nama_cabang,
+      COALESCE(CONVERT(c.nama_cabang USING utf8mb4) COLLATE utf8mb4_unicode_ci, CONVERT(d.kode_cabang USING utf8mb4) COLLATE utf8mb4_unicode_ci) COLLATE utf8mb4_unicode_ci AS nama_cabang,
       c.singkatan,
       d.id,
       d.nama_event,
       d.tanggal,
+      d.waktu_upload,
       d.foto
     FROM (${unionSql}) d
     LEFT JOIN tb_cabang c
-      ON CAST(c.kode_cabang AS CHAR) = d.kode_cabang
+      ON CAST(c.kode_cabang AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci = d.kode_cabang
     ${whereSql}
-    ORDER BY d.tanggal DESC, d.kode_cabang ASC, d.id DESC
-  `, values);
+    ORDER BY d.tanggal DESC, d.waktu_upload DESC, d.kode_cabang ASC, d.id DESC
+    ${Number.isInteger(limit) && Number(limit) > 0 ? "LIMIT ?" : ""}
+  `, Number.isInteger(limit) && Number(limit) > 0 ? [...values, Number(limit)] : values);
 
   return (rows as DocumentationRow[]).map((row) => ({
     ...row,
@@ -320,6 +333,7 @@ export async function getDocumentationRows(
     id: String(row.id),
     nama_event: String(row.nama_event || "(Tanpa nama event)"),
     tanggal: String(row.tanggal).slice(0, 10),
+    waktu_upload: row.waktu_upload ? String(row.waktu_upload) : String(row.tanggal),
     foto: row.foto ? String(row.foto) : null,
   }));
 }

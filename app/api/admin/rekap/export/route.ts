@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getAdminUser, unauthorizedAdminResponse } from "@/lib/admin-auth";
 import ExcelJS from "exceljs";
 import sharp from "sharp";
 import { readFile } from "fs/promises";
@@ -67,6 +68,7 @@ function safePhotoPath(photoUrl: string, branchCode: string) {
 
 export async function GET(request: NextRequest) {
   try {
+    if (!(await getAdminUser())) return unauthorizedAdminResponse();
     const filters = parseReportFilters(request.nextUrl.searchParams);
     const unionSql = await getDocumentationUnionSql();
     const docs = await getDocumentationRows(filters, unionSql);
