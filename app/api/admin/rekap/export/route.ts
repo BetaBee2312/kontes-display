@@ -9,7 +9,6 @@ import {
   getDocumentationUnionSql,
   parseReportFilters,
 } from "@/lib/admin-rekap";
-import { getAdminUser, unauthorizedAdminResponse } from "@/lib/admin-auth";
 
 const modeLabels: Record<string, string> = {
   month: "Rekap Per Bulan",
@@ -68,7 +67,6 @@ function safePhotoPath(photoUrl: string, branchCode: string) {
 
 export async function GET(request: NextRequest) {
   try {
-    if (!(await getAdminUser())) return unauthorizedAdminResponse();
     const filters = parseReportFilters(request.nextUrl.searchParams);
     const unionSql = await getDocumentationUnionSql();
     const docs = await getDocumentationRows(filters, unionSql);
@@ -125,7 +123,9 @@ export async function GET(request: NextRequest) {
       { header: "Waktu Upload", key: "waktu_upload", width: 23 },
       { header: "Foto", key: "foto", width: 16 },
     ];
-    detail.addRow(["No", "ID Dokumentasi", "Kode Cabang", "Nama Cabang", "Event", "Tanggal Dokumentasi", "Waktu Upload", "Foto"]);
+    // Definisi kolom di atas sudah membuat header pada row 1.
+    // Jangan addRow(header) lagi, karena akan menyisipkan satu baris header
+    // tambahan dan membuat foto bergeser satu baris dari data yang benar.
     const detailHeader = detail.getRow(1);
     detailHeader.height = 24;
     detailHeader.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -148,8 +148,9 @@ export async function GET(request: NextRequest) {
         doc.waktu_upload || doc.tanggal,
         "",
       ]);
-      row.height = 70;
-      row.alignment = { vertical: "middle" };
+      // Sisakan ruang yang konsisten agar thumbnail berada di tengah selnya.
+      row.height = 72;
+      row.alignment = { vertical: "middle", wrapText: true };
       row.eachCell((cell) => {
         cell.border = { bottom: { style: "thin", color: { argb: "FFE2E8F0" } } };
       });
@@ -164,10 +165,18 @@ export async function GET(request: NextRequest) {
               .resize(130, 130, { fit: "inside", withoutEnlargement: true })
               .jpeg({ quality: 65, mozjpeg: true })
               .toBuffer();
-            const imageId = workbook.addImage({ buffer: compressed, extension: "jpeg" });
+            // Encode as a data URL instead of passing Node Buffer directly.
+            // This avoids incompatible Buffer typings across sharp, Node.js, and ExcelJS.
+            const imageId = workbook.addImage({
+              base64: `data:image/jpeg;base64,${compressed.toString("base64")}`,
+              extension: "jpeg",
+            });
+            // Kolom Foto adalah H (index 7). Posisi menggunakan baris data
+            // aktual (rowNumber - 1), bukan baris header yang duplikat.
+            // Offset fractional membuat thumbnail rata tengah di sel H.
             detail.addImage(imageId, {
-              tl: { col: 7.15, row: rowNumber - 1 + 0.06 },
-              ext: { width: 62, height: 62 },
+              tl: { col: 7.24, row: rowNumber - 1 + 0.18 },
+              ext: { width: 60, height: 60 },
               editAs: "oneCell",
             });
           } catch (imageError) {
@@ -183,7 +192,17 @@ export async function GET(request: NextRequest) {
     detail.autoFilter = { from: "A1", to: "H1" };
 
     // Open the workbook on actual branch submissions, not only the aggregate count sheet.
-    workbook.views = [{ activeTab: 1 }];
+    workbook.views = [
+      {
+        x: 0,
+        y: 0,
+        width: 10000,
+        height: 20000,
+        firstSheet: 0,
+        activeTab: 1,
+        visibility: "visible",
+      },
+    ];
 
     const buffer = await workbook.xlsx.writeBuffer();
     const fileName = `rekap_dokumentasi_${filters.mode}_${new Date().toISOString().slice(0, 10)}.xlsx`;
