@@ -4,16 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "build": "next build --webpack",
+    "start": "next start"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "browser-image-compression": "^2.0.2",
     "exceljs": "^4.4.0",
     "mysql2": "^3.24.5",
-    "next": "16.4.0",
+    "next": "^16.4.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-feather": "^2.0.10",
@@ -28,7 +27,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "postcss": "^8.5.30",
-    "tailwindcss": "^4",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5"
   }
 }
