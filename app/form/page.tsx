@@ -17,7 +17,6 @@ import {
 
 
 import { Camera } from "react-feather";
-import Swal from "sweetalert2";
 
 import imageCompression from "browser-image-compression";
 
@@ -242,13 +241,7 @@ export default function FormPage() {
 
         if (!response.ok) {
           if (response.status === 503 || result.code === "NO_EVENTS") {
-            await Swal.fire({
-              icon: "warning",
-              title: "Cabang Tidak Terdaftar di Event",
-              text: result.message || "Cabang ini belum terdaftar di event manapun.",
-              confirmButtonText: "Mengerti",
-              confirmButtonColor: "#2563eb",
-            });
+            window.alert(result.message || "Cabang ini belum terdaftar di event manapun.");
             setEvents([]);
             return;
           }
@@ -577,24 +570,12 @@ export default function FormPage() {
 
 
       if (result.code === "CONFIG_NOT_INSTALLED") {
-        await Swal.fire({
-          icon: "error",
-          title: "Konfigurasi Belum Disiapkan",
-          text: result.message || "Administrator perlu menyiapkan konfigurasi event cabang terlebih dahulu.",
-          confirmButtonText: "Mengerti",
-          confirmButtonColor: "#2563eb",
-        });
+        window.alert(result.message || "Administrator perlu menyiapkan konfigurasi event cabang terlebih dahulu.");
         return;
       }
 
       if (!Array.isArray(result.data?.events) || result.data.events.length === 0) {
-        await Swal.fire({
-          icon: "warning",
-          title: "Cabang Tidak Terdaftar di Event",
-          text: "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator.",
-          confirmButtonText: "Mengerti",
-          confirmButtonColor: "#2563eb",
-        });
+        window.alert("Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator.");
         setCabang(null);
         return;
       }
