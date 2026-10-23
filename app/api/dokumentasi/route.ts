@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent, kodeKolom);
     const uploadDir = path.join(process.cwd(), "public", "uploads", "dokumentasi", kodeCabang);
     await mkdir(uploadDir, { recursive: true });
-    const fileName = `${documentId}_${crypto.randomUUID()}${extension}`;
+    const fileName = `${crypto.randomUUID()}${extension}`;
     savedFilePath = path.join(uploadDir, fileName);
     await writeFile(savedFilePath, Buffer.from(await foto.arrayBuffer()));
     const fotoUrl = `/uploads/dokumentasi/${kodeCabang}/${fileName}`;
