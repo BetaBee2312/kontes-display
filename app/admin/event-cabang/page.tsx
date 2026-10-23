@@ -112,6 +112,8 @@ export default function BranchEventConfigPage() {
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan konfigurasi.");
       setMessage(result.message || "Konfigurasi berhasil disimpan.");
       await load();
+      // Keep the currently selected branch visible after refresh.
+      setSelectedBranch((current) => current);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.");
     } finally {
