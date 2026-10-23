@@ -123,6 +123,7 @@ export default function AdminLayout({
   const isLoginPage = pathname === "/admin/login";
   const [authChecked, setAuthChecked] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -195,11 +196,20 @@ export default function AdminLayout({
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="flex min-h-screen min-w-0">
+        {mobileMenuOpen && (
+          <button
+            type="button"
+            aria-label="Tutup navigasi"
+            onClick={() => setMobileMenuOpen(false)}
+            className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[2px] lg:hidden"
+          />
+        )}
         {/* SIDEBAR DESKTOP */}
-        <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white px-4 py-5 lg:flex lg:flex-col">
-          <Link href="/admin" className="flex items-center gap-3 rounded-lg px-2 py-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <AdminIcon name="documents" className="h-5 w-5" />
+        <aside className={`fixed inset-y-0 left-0 z-50 flex w-[min(84vw,300px)] shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-5 shadow-xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-10 lg:h-screen lg:w-64 lg:translate-x-0 lg:shadow-none ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
+          <div className="mb-2 flex items-center justify-between">
+          <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
+              <img src="/logo/logoyomart.png" alt="Yomart" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold tracking-tight text-slate-900">
@@ -208,8 +218,12 @@ export default function AdminLayout({
               <p className="mt-0.5 text-xs text-slate-500">Admin Console</p>
             </div>
           </Link>
+          <button type="button" onClick={() => setMobileMenuOpen(false)} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden" aria-label="Tutup menu">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          </button>
+          </div>
 
-          <div className="mt-8">
+          <div className="mt-6 lg:mt-8">
             <p className="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
               Menu utama
             </p>
@@ -220,6 +234,7 @@ export default function AdminLayout({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
                     aria-current={active ? "page" : undefined}
                     className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm transition-colors ${
                       active
@@ -253,13 +268,15 @@ export default function AdminLayout({
           <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
             <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
-                <Link
-                  href="/admin"
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white lg:hidden"
-                  aria-label="Ke dashboard admin"
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 lg:hidden"
+                  aria-label="Buka navigasi admin"
+                  aria-expanded={mobileMenuOpen}
                 >
-                  <AdminIcon name="documents" className="h-[18px] w-[18px]" />
-                </Link>
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
                 <div className="min-w-0">
                   <p className="text-xs text-slate-500">Documentation System</p>
                   <h1 className="truncate text-base font-semibold sm:text-lg">
@@ -286,30 +303,7 @@ export default function AdminLayout({
               </div>
             </div>
 
-            {/* NAVIGASI MOBILE */}
-            <nav
-              aria-label="Navigasi admin mobile"
-              className="flex gap-1 overflow-x-auto border-t border-slate-100 px-3 py-2 lg:hidden sm:px-6"
-            >
-              {navigation.map((item) => {
-                const active = isActivePath(pathname, item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={`inline-flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                      active
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                    }`}
-                  >
-                    <AdminIcon name={item.icon} className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+
           </header>
 
           <main className="min-w-0 flex-1">{children}</main>
