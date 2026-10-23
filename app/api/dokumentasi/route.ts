@@ -54,8 +54,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, code: "INVALID_PHOTO", message: "Foto harus berupa gambar dengan ukuran maksimal 2 MB." }, { status: 400 });
     }
     const extension = path.extname(foto.name).toLowerCase();
-    const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp"];
-    if (!allowedExtensions.includes(extension)) {
+    if (![".jpg", ".jpeg", ".png", ".webp"].includes(extension)) {
       return NextResponse.json({ success: false, code: "INVALID_PHOTO_FORMAT", message: "Format foto harus JPG, JPEG, PNG, atau WEBP." }, { status: 400 });
     }
 
@@ -68,12 +67,12 @@ export async function POST(request: Request) {
     }
     const branch = branchRows[0] as { kode_cabang: string | number; nama_cabang: string };
     const kodeCabang = String(branch.kode_cabang);
+
     const [assignmentRows] = await db.execute(
       `SELECT e.id, e.kode_event, e.nama_event
        FROM tb_event_cabang ec
        INNER JOIN tb_event e ON e.id = ec.id_event
-       WHERE ec.kode_cabang = ? AND ec.aktif = 1
-         AND e.kode_event = ?
+       WHERE ec.kode_cabang = ? AND ec.aktif = 1 AND e.kode_event = ?
        LIMIT 1`,
       [kodeCabang, kodeEvent],
     );
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
     const event = assignmentRows[0] as { id: number; kode_event: string; nama_event: string };
 
     const [fieldRows] = await db.execute(
-      `SELECT jd.id, jd.kode_kolom, jd.nama_kolom
+      `SELECT jd.id, jd.kode_kolom, jd.nama_kolom, ecc.wajib
        FROM tb_event_cabang_kolom ecc
        INNER JOIN tb_jenis_dokumentasi jd ON jd.id = ecc.id_jenis_dokumentasi
        WHERE ecc.kode_cabang = ? AND ecc.id_event = ?
@@ -94,7 +93,7 @@ export async function POST(request: Request) {
     if (!Array.isArray(fieldRows) || fieldRows.length === 0) {
       return NextResponse.json({ success: false, code: "FIELD_NOT_ASSIGNED", message: "Jenis foto ini tidak diizinkan untuk event dan cabang tersebut." }, { status: 403 });
     }
-    const field = fieldRows[0] as { id: number; kode_kolom: string; nama_kolom: string };
+    const field = fieldRows[0] as { id: number; kode_kolom: string; nama_kolom: string; wajib: number };
 
     const tableName = await ensureCabangTable(db, kodeCabang);
     const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent, kodeKolom);
@@ -131,11 +130,8 @@ export async function POST(request: Request) {
     if (savedFilePath) await unlink(savedFilePath).catch(() => undefined);
     console.error("POST /api/dokumentasi:", error);
     const code = error && typeof error === "object" && "code" in error ? String((error as {code?:unknown}).code) : "";
-    if (code === "ER_BAD_FIELD_ERROR" && String((error as {sqlMessage?:unknown}).sqlMessage ?? "").includes("kode_kolom")) {
-      return NextResponse.json({ success: false, code: "MIGRATION_REQUIRED", message: "Kolom jenis dokumentasi belum tersedia di tabel cabang. Jalankan migration tambahan." }, { status: 503 });
-    }
     if (code === "ER_NO_SUCH_TABLE") {
-      return NextResponse.json({ success: false, code: "CONFIG_NOT_INSTALLED", message: "Konfigurasi event belum dipasang. Hubungi administrator." }, { status: 503 });
+      return NextResponse.json({ success: false, code: "CONFIG_NOT_INSTALLED", message: "Konfigurasi event belum dipasang. Jalankan migration database terlebih dahulu." }, { status: 503 });
     }
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Gagal menyimpan dokumentasi." }, { status: 500 });
   }
