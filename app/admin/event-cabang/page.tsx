@@ -130,9 +130,8 @@ export default function BranchEventConfigPage() {
       setFieldAssignments(refreshed.data.fieldAssignments || []);
       setEvents(refreshed.data.events || []);
       setBranches(refreshed.data.cabang || []);
-      setMessage(result.message || "Kolom foto berhasil ditambahkan.");
       await Swal.fire({ icon: "success", title: "Kolom foto ditambahkan", text: result.message || "Kolom foto berhasil ditambahkan.", timer: 1700, showConfirmButton: false });
-    } catch (e) { const message = e instanceof Error ? e.message : "Gagal menambah kolom foto."; setError(message); await Swal.fire({ icon: "error", title: "Gagal menambah kolom", text: message }); }
+    } catch (e) { const message = e instanceof Error ? e.message : "Gagal menambah kolom foto."; await Swal.fire({ icon: "error", title: "Gagal menambah kolom", text: message }); }
   }
   async function save() {
     if (!selectedBranch) { await Swal.fire({ icon: "warning", title: "Pilih cabang", text: "Pilih cabang terlebih dahulu." }); return; }
@@ -145,11 +144,9 @@ export default function BranchEventConfigPage() {
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan konfigurasi.");
-      setMessage(result.message || "Konfigurasi berhasil disimpan.");
       await Swal.fire({ icon: "success", title: "Konfigurasi tersimpan", text: result.message || "Konfigurasi berhasil disimpan.", timer: 1700, showConfirmButton: false });
     } catch (e) {
       const message = e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.";
-      setError(message);
       await Swal.fire({ icon: "error", title: "Gagal menyimpan konfigurasi", text: message });
     } finally {
       setSaving(false);
@@ -170,7 +167,7 @@ export default function BranchEventConfigPage() {
           className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Muat ulang</button>
       </header>
 
-      {(error || message) && <div role="status" className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>{error || message}</div>}
+
 
       {loading ? <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">Memuat data cabang dan event...</div> : (
         <div className="grid min-w-0 gap-4 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:gap-6">
