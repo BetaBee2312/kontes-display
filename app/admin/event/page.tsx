@@ -48,6 +48,9 @@ async function readResponse(response: Response) {
 export default function EventAdminPage() {
   const [eventList, setEventList] = useState<EventItem[]>([]);
   const [photoFields, setPhotoFields] = useState<PhotoField[]>([]);
+  const [newFieldName, setNewFieldName] = useState("");
+  const [fieldBusy, setFieldBusy] = useState(false);
+
   const [eventFields, setEventFields] = useState<Record<string, EventPhotoField[]>>({});
   const [fieldSearch, setFieldSearch] = useState("");
 
@@ -102,6 +105,105 @@ export default function EventAdminPage() {
   useEffect(() => {
     void loadEvents();
   }, [loadEvents]);
+  function makeFieldCode(value: string) {
+    return value.toLowerCase().trim().normalize("NFKD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 50);
+  }
+
+  const draftFieldCode = makeFieldCode(newFieldName);
+  const duplicateField = photoFields.find((field) =>
+    field.kode_kolom.toLowerCase() === draftFieldCode ||
+    field.nama_kolom.trim().toLowerCase() === newFieldName.trim().toLowerCase()
+  );
+
+  async function refreshPhotoConfig() {
+    const response = await fetch("/api/admin/event-cabang", { cache: "no-store" });
+    const result = await readResponse(response);
+    if (!response.ok || !result.success) throw new Error(result.message || "Gagal memuat kolom dokumentasi.");
+    const fields = (result.data.fields || []) as PhotoField[];
+    const mappings = (result.data.eventFields || []) as Array<{
+      id_event: number | string; id_jenis_dokumentasi: number | string; aktif: number | boolean; wajib: number | boolean; urutan: number;
+    }>;
+    setPhotoFields(fields);
+    const map: Record<string, EventPhotoField[]> = {};
+    for (const event of eventList) {
+      map[String(event.id)] = fields.map((field, index) => {
+        const existing = mappings.find((item) => Number(item.id_event) === Number(event.id) && Number(item.id_jenis_dokumentasi) === Number(field.id));
+        return {
+          id_jenis_dokumentasi: String(field.id),
+          aktif: existing ? Number(existing.aktif) === 1 || existing.aktif === true : false,
+          wajib: existing ? Number(existing.wajib) === 1 || existing.wajib === true : true,
+          urutan: existing ? Number(existing.urutan) : index,
+        };
+      });
+    }
+    setEventFields(map);
+  }
+
+  async function createPhotoField(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newFieldName.trim();
+    const code = makeFieldCode(name);
+    if (!name || !code) {
+      await Swal.fire({ icon: "warning", title: "Nama kolom tidak valid", text: "Masukkan nama yang terdiri dari huruf atau angka." });
+      return;
+    }
+    if (duplicateField) {
+      await Swal.fire({ icon: "warning", title: "Kolom sudah tersedia", text: `"${duplicateField.nama_kolom}" sudah terdaftar dengan kode "${duplicateField.kode_kolom}".` });
+      return;
+    }
+    setFieldBusy(true);
+    try {
+      const response = await fetch("/api/admin/event-cabang", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create-field", kode_kolom: code, nama_kolom: name }),
+      });
+      const result = await readResponse(response);
+      if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah jenis dokumentasi.");
+      setNewFieldName("");
+      await loadEvents();
+      await Swal.fire({ icon: "success", title: "Jenis dokumentasi ditambahkan", text: result.message || "Jenis dokumentasi berhasil ditambahkan.", timer: 1500, showConfirmButton: false });
+    } catch (error) {
+      await Swal.fire({ icon: "error", title: "Gagal menambah jenis dokumentasi", text: error instanceof Error ? error.message : "Permintaan gagal." });
+    } finally {
+      setFieldBusy(false);
+    }
+  }
+
+  async function deletePhotoField(field: PhotoField) {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: "Hapus jenis dokumentasi?",
+      text: `Hapus "${field.nama_kolom}" (${field.kode_kolom}) dari master jenis dokumentasi?`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#dc2626",
+      reverseButtons: true,
+    });
+    if (!confirmation.isConfirmed) return;
+    setFieldBusy(true);
+    try {
+      const response = await fetch("/api/admin/event-cabang", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_jenis_dokumentasi: field.id }),
+      });
+      const result = await readResponse(response);
+      if (!response.ok || !result.success) throw new Error(result.message || "Gagal menghapus jenis dokumentasi.");
+      await loadEvents();
+      await Swal.fire({ icon: "success", title: "Jenis dokumentasi dihapus", text: result.message || "Kolom berhasil dihapus.", timer: 1500, showConfirmButton: false });
+    } catch (error) {
+      await Swal.fire({ icon: "error", title: "Tidak dapat menghapus", text: error instanceof Error ? error.message : "Permintaan gagal." });
+    } finally {
+      setFieldBusy(false);
+    }
+  }
+
   function toggleEventField(eventId: string, fieldId: string, checked: boolean) {
     setEventFields((current) => ({
       ...current,
@@ -326,9 +428,41 @@ export default function EventAdminPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Konfigurasi dokumentasi</p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">Kolom Foto per Event</h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">Checklist ini berlaku untuk semua cabang. Di menu Konfigurasi Event Cabang, administrator cukup menentukan cabang mana yang mendapat akses ke event.</p>
+            <p className="mt-1 max-w-2xl text-sm text-slate-500">Buat jenis dokumentasi satu kali, lalu centang event yang memakai kolom tersebut. Pengaturan ini berlaku untuk semua cabang.</p>
           </div>
           <input value={fieldSearch} onChange={(event) => setFieldSearch(event.target.value)} placeholder="Cari jenis kolom..." className={`${inputClass} sm:max-w-xs`} />
+        </div>
+        <div className="border-b border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+          <div className="flex flex-col gap-1">
+            <h3 className="font-semibold text-slate-900">Master Jenis Dokumentasi</h3>
+            <p className="text-sm text-slate-500">Contoh: Hangmob, Voucher, Floor Display. Nama dan kode yang sama hanya boleh dibuat sekali.</p>
+          </div>
+          <form onSubmit={(event) => void createPhotoField(event)} className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="min-w-0 flex-1">
+              <label htmlFor="master-photo-field" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nama jenis dokumentasi</label>
+              <input id="master-photo-field" value={newFieldName} onChange={(event) => setNewFieldName(event.target.value)} maxLength={100} placeholder="Contoh: Floor Display" className={inputClass} />
+              <p className="mt-1.5 text-xs text-slate-500">Kode otomatis: <span className="font-mono">{draftFieldCode || "nama_kolom"}</span></p>
+              {duplicateField && <p className="mt-1 text-xs font-medium text-amber-700">Sudah terdaftar sebagai {duplicateField.nama_kolom} ({duplicateField.kode_kolom}).</p>}
+            </div>
+            <button type="submit" disabled={fieldBusy || !newFieldName.trim() || !draftFieldCode || Boolean(duplicateField)} className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40 sm:self-end">{fieldBusy ? "Memproses..." : "Tambah jenis"}</button>
+          </form>
+          <div className="mt-4 grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {photoFields.map((field) => {
+              const usageCount = (Object.values(eventFields).flat()).filter((item) => Number(item.id_jenis_dokumentasi) === Number(field.id) && item.aktif).length;
+              return (
+                <div key={String(field.id)} className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">{field.nama_kolom.trim().slice(0, 1).toUpperCase()}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-900">{field.nama_kolom}</p>
+                    <p className="mt-1 truncate font-mono text-xs text-slate-500">{field.kode_kolom}</p>
+                    <p className="mt-1 text-[11px] text-slate-400">{usageCount ? `Aktif di ${usageCount} event` : "Belum dipakai event"}</p>
+                  </div>
+                  <button type="button" onClick={() => void deletePhotoField(field)} disabled={fieldBusy || usageCount > 0} title={usageCount ? "Lepaskan dari event terlebih dahulu" : "Hapus jenis dokumentasi"} className="rounded-lg border border-red-200 px-2.5 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30">Hapus</button>
+                </div>
+              );
+            })}
+            {photoFields.length === 0 && <p className="text-sm text-slate-500">Belum ada jenis dokumentasi.</p>}
+          </div>
         </div>
         {photoFields.length === 0 ? (
           <div className="p-6 text-sm text-slate-500">Belum ada master jenis dokumentasi. Tambahkan Hangmob, Voucher, Floor Display, dan lainnya dari menu Konfigurasi Event Cabang.</div>
