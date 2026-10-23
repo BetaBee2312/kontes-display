@@ -251,9 +251,6 @@ export default function RekapAdminPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Laporan</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Rekap Dokumentasi</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">
-            Ringkasan jumlah dan daftar pengiriman asli cabang, termasuk foto serta waktu upload.
-          </p>
         </div>
         <button
           type="button"
