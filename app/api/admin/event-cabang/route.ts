@@ -63,11 +63,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Kode kolom harus berupa huruf kecil, angka, atau garis bawah; nama maksimal 100 karakter." }, { status: 400 });
     }
     const [existing] = await db.execute(
-      `SELECT id FROM tb_jenis_dokumentasi WHERE kode_kolom = ? LIMIT 1`,
-      [kode],
+      `SELECT id, nama_kolom, kode_kolom FROM tb_jenis_dokumentasi
+       WHERE kode_kolom = ? OR LOWER(TRIM(nama_kolom)) = LOWER(TRIM(?))
+       LIMIT 1`,
+      [kode, nama],
     );
     if (Array.isArray(existing) && existing.length > 0) {
-      return NextResponse.json({ success: false, message: "Kode kolom tersebut sudah digunakan. Gunakan nama yang berbeda." }, { status: 409 });
+      const duplicate = existing[0] as { nama_kolom: string; kode_kolom: string };
+      return NextResponse.json({
+        success: false,
+        code: "DUPLICATE_FIELD",
+        message: `Jenis dokumentasi "${duplicate.nama_kolom}" sudah ada dengan kode "${duplicate.kode_kolom}".`,
+      }, { status: 409 });
     }
     await db.execute(
       `INSERT INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif) VALUES (?, ?, 1)`,
