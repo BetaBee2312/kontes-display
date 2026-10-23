@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 type Branch = { kode_cabang: string | number; nama_cabang: string; singkatan?: string };
 type EventItem = { id: number | string; kode_event: string; nama_event: string; aktif?: number | boolean };
 type ExistingAssignment = { id_event: number | string; kode_cabang: string | number; aktif: number | boolean };
-type Config = { id_event: string; aktif: boolean; columns: [] };
+type Config = { id_event: string; aktif: boolean };
 
 function isOn(value: number | boolean | string | undefined) {
   return value === true || Number(value) === 1;
@@ -48,7 +48,7 @@ export default function BranchEventConfigPage() {
       const assignment = assignments.find((item) =>
         String(item.kode_cabang) === branch && Number(item.id_event) === Number(event.id)
       );
-      return { id_event: String(event.id), aktif: isOn(assignment?.aktif), columns: [] };
+      return { id_event: String(event.id), aktif: isOn(assignment?.aktif) };
     }));
   }, [selectedBranch, events, assignments]);
 
