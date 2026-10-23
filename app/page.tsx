@@ -16,9 +16,6 @@ export default function Home() {
               Dokumentasi Cabang
             </h1>
 
-            <p className="mx-auto mt-4 max-w-xl text-slate-500">
-              Sistem pengelolaan dokumentasi cabang secara terpusat.
-            </p>
           </div>
 
           {/* MENU */}
@@ -50,9 +47,6 @@ export default function Home() {
                 Upload Dokumentasi
               </h2>
 
-              <p className="mt-3 text-slate-500">
-                Masukkan kode site cabang dan upload foto dokumentasi.
-              </p>
 
               <div className="mt-6 font-medium text-blue-600 transition group-hover:translate-x-1">
                 Mulai Upload →
@@ -85,9 +79,6 @@ export default function Home() {
                 Master Panel
               </h2>
 
-              <p className="mt-3 text-slate-500">
-                Kelola cabang, lihat dokumentasi, dan monitor status upload.
-              </p>
 
               <div className="mt-6 font-medium text-slate-700 transition group-hover:translate-x-1">
                 Buka Master Panel →

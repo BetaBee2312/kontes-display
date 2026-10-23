@@ -324,7 +324,6 @@ export default function EventAdminPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Data Event</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-500">Kelola master event dan tentukan jenis kolom dokumentasi yang tersedia untuk setiap event. Cabang hanya mengatur akses ke event.</p>
         </div>
         <button type="button" onClick={openCreate} className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
           <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
@@ -404,7 +403,6 @@ export default function EventAdminPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Konfigurasi dokumentasi</p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">Kolom Foto per Event</h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">Buat jenis dokumentasi satu kali, lalu centang event yang memakai kolom tersebut. Pengaturan ini berlaku untuk semua cabang.</p>
           </div>
           <input value={fieldSearch} onChange={(event) => setFieldSearch(event.target.value)} placeholder="Cari jenis kolom..." className={`${inputClass} sm:max-w-xs`} />
         </div>
