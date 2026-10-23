@@ -97,6 +97,12 @@ export async function POST(request: Request) {
     const field = fieldRows[0] as { id: number; kode_kolom: string; nama_kolom: string };
 
     const tableName = await ensureCabangTable(db, kodeCabang);
+    const [existingIds] = await db.execute(
+      `SELECT id FROM \`${tableName}\` WHERE event = ? AND tanggal = ? AND kode_kolom = ? LIMIT 1`,
+      [String(event.nama_event).trim(), tanggal, kodeKolom],
+    );
+    // Keep the original branch/date/event ID shape but allocate a unique suffix when
+    // the same field receives multiple photos for the same event/day.
     const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent, kodeKolom);
     const uploadDir = path.join(process.cwd(), "public", "uploads", "dokumentasi", kodeCabang);
     await mkdir(uploadDir, { recursive: true });
