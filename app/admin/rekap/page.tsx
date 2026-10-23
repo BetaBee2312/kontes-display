@@ -315,22 +315,22 @@ export default function RekapAdminPage() {
         <div className={cardClass()}>
           <p className="text-sm text-slate-500">Total Dokumentasi</p>
           <p className="mt-3 text-3xl font-semibold tabular-nums text-slate-900">{loading ? "—" : numberFormat.format(stats.total_dokumentasi)}</p>
-          <p className="mt-1 text-xs text-slate-400">Sesuai filter aktif</p>
+          
         </div>
         <div className={cardClass()}>
           <p className="text-sm text-slate-500">Cabang Mengirim</p>
           <p className="mt-3 text-3xl font-semibold tabular-nums text-slate-900">{loading ? "—" : numberFormat.format(stats.cabang_aktif)}</p>
-          <p className="mt-1 text-xs text-slate-400">Cabang dengan dokumentasi</p>
+          
         </div>
         <div className={cardClass()}>
           <p className="text-sm text-slate-500">Event Terkirim</p>
           <p className="mt-3 text-3xl font-semibold tabular-nums text-slate-900">{loading ? "—" : numberFormat.format(stats.event_aktif)}</p>
-          <p className="mt-1 text-xs text-slate-400">Event dengan dokumentasi</p>
+          
         </div>
         <div className={cardClass()}>
           <p className="text-sm text-slate-500">Hari Aktif</p>
           <p className="mt-3 text-3xl font-semibold tabular-nums text-slate-900">{loading ? "—" : numberFormat.format(stats.tanggal_aktif)}</p>
-          <p className="mt-1 text-xs text-slate-400">Tanggal dengan kiriman</p>
+          
         </div>
       </div>
 
@@ -340,7 +340,7 @@ export default function RekapAdminPage() {
             <h2 className="font-semibold text-slate-900">Data dokumentasi yang dikirim cabang</h2>
 
           </div>
-          <span className="text-xs text-slate-500">Menampilkan {numberFormat.format(detailsShown)} dari {numberFormat.format(stats.total_dokumentasi)} data yang cocok</span>
+          
         </div>
         <div className="space-y-3 p-3 sm:hidden">
           {loading ? (
@@ -449,7 +449,7 @@ export default function RekapAdminPage() {
               ) : rows.length === 0 ? (
                 <tr><td colSpan={headers.length} className="px-5 py-14 text-center">
                   <p className="font-medium text-slate-700">Belum ada data untuk filter ini</p>
-                  <p className="mt-1 text-sm text-slate-400">Ubah filter atau periksa apakah dokumentasi sudah masuk ke database.</p>
+                  
                 </td></tr>
               ) : rows.map((row, index) => <tr key={`${mode}-${index}`} className="transition hover:bg-slate-50">{renderCells(row)}</tr>)}
             </tbody>
