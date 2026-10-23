@@ -1,13 +1,12 @@
-# Database migration: event per cabang and dynamic photo fields
+# Database migration: event per cabang and event-level photo fields
 
 Run `20261023_branch_event_photo_config.sql` once against the same MySQL database used by the app, after making a backup.
 
-## How the relationships work
+## Responsibilities
 
-- `tb_event` remains the master event table.
-- `tb_event_cabang` grants an event to a branch (one row per branch/event).
-- `tb_jenis_dokumentasi` is the master list of photo fields.
-- `tb_event_cabang_kolom` enables/disables a field for a specific branch and event. It controls ordering and whether at least one photo is required for that field.
+- `tb_jenis_dokumentasi`: master list of photo/documentation fields such as Hangmob, Voucher, and Floor Display. Create each type once.
+- `tb_event_kolom`: event-level field configuration. In **Admin → Data Event**, choose which photo fields each event uses and whether they are required.
+- `tb_event_cabang`: access control only. In **Admin → Konfigurasi Event Cabang**, assign events to each branch.
 - Existing per-branch tables `tb_<kode_cabang>` remain in place so historical records are not moved.
 
 ## Initial setup
@@ -15,11 +14,12 @@ Run `20261023_branch_event_photo_config.sql` once against the same MySQL databas
 1. Back up the database.
 2. Run `20261023_branch_event_photo_config.sql`.
 3. Deploy this branch.
-4. Open **Admin → Konfigurasi Event Cabang**.
-5. Select each branch, enable only its assigned events, then select the photo fields for those events and save.
-6. Test an unassigned branch (SweetAlert expected), an assigned branch with different fields, and a direct API request for an unassigned field (HTTP 403 expected).
+4. Add any master photo types in **Admin → Konfigurasi Event Cabang**. The master list is shared, and duplicates by code/name are rejected.
+5. Open **Admin → Data Event** and set checkboxes for photo fields each event uses.
+6. Open **Admin → Konfigurasi Event Cabang** and choose which events each branch can access.
+7. Test a branch with one event and another branch with a different event set, then verify upload forms only show the fields configured for the selected event.
 
-Existing branches/events are **not automatically assigned**. Each branch must be granted access explicitly.
+The migration creates `tb_event_kolom` and copies the prior field settings by event. A field is enabled for an event if it was active on at least one previous branch, preserving a practical starting point. The old `tb_event_cabang_kolom` table is intentionally retained during this transition; the new application paths read event-level mappings.
 
 ## Legacy table column
 
