@@ -160,8 +160,8 @@ function BarChart({ items, color, emptyMessage }: { items: ChartItem[]; color: s
           })}
         </svg>
       </div>
-      {!anyValue && }
-      {anyValue && }
+      {!anyValue && <p className="mt-3 rounded-lg border border-dashed border-slate-200 px-4 py-3 text-center text-xs text-slate-500">{emptyMessage}</p>}
+      {anyValue && <p className="mt-3 text-xs text-slate-500">Total dokumentasi: <span className="font-semibold text-slate-700">{formatNumber(items.reduce((sum, item) => sum + item.value, 0))}</span></p>}
     </div>
   );
 }
