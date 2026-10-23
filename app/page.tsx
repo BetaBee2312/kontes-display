@@ -79,9 +79,6 @@ export default function Home() {
                 Master Panel
               </h2>
 
-              <p className="mt-3 text-slate-500">
-                Kelola cabang, lihat dokumentasi, dan monitor status upload.
-              </p>
 
               <div className="mt-6 font-medium text-slate-700 transition group-hover:translate-x-1">
                 Buka Master Panel →
