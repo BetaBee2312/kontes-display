@@ -648,11 +648,6 @@ export default function FormPage() {
 
    */
 
-  function handleCreateEvent(_namaEvent: string) {
-    // Branches may only submit an event granted by the administrator.
-    setError("Event hanya dapat dipilih dari daftar yang diberikan administrator.");
-  }
-
   /*
 
    * =====================================================
@@ -960,28 +955,6 @@ export default function FormPage() {
    * =====================================================
 
    */
-
-  const filteredEvents =
-
-    events.filter((event) =>
-
-      event.nama_event
-
-        .toLowerCase()
-
-        .includes(
-
-          eventSearch
-
-            .toLowerCase()
-
-            .trim()
-
-        )
-
-    );
-
-
 
   const filteredEvents = events.filter((event) =>
     event.nama_event.toLowerCase().includes(eventSearch.toLowerCase().trim())
@@ -1799,9 +1772,7 @@ export default function FormPage() {
 
                                                     {filteredEvents.length ===
 
-                            0 &&
-
-                            !showCreate && (
+                            0 && (
 
                               <div className="px-4 py-8 text-center text-sm text-slate-400">
 
