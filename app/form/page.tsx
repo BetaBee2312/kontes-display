@@ -143,7 +143,6 @@ export default function FormPage() {
 
 
   const [fotos, setFotos] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
   const [selectedFieldCode, setSelectedFieldCode] = useState("");
   const [fieldPhotos, setFieldPhotos] = useState<Record<string, File[]>>({});
   const [fieldPreviews, setFieldPreviews] = useState<Record<string, string[]>>({});
@@ -408,11 +407,10 @@ export default function FormPage() {
 
 
 
-    previews.forEach((url) => URL.revokeObjectURL(url));
-
+    Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
     setFotos([]);
-
-    setPreviews([]);
+    setFieldPhotos({});
+    setFieldPreviews({});
 
 
 
@@ -848,8 +846,7 @@ export default function FormPage() {
   function removeFoto(index: number) {
     const previewUrl = previews[index];
     if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setFotos((current) => current.filter((_, i) => i !== index));
-    setPreviews((current) => current.filter((_, i) => i !== index));
+    setFotos((current) => current.filter((file) => file !== fotos[index]));
     setMessage("Foto dihapus dari daftar upload.");
   }
 
@@ -858,8 +855,8 @@ export default function FormPage() {
     if (preview) URL.revokeObjectURL(preview);
     setFieldPhotos((current) => ({ ...current, [fieldCode]: (current[fieldCode] || []).filter((_, i) => i !== index) }));
     setFieldPreviews((current) => ({ ...current, [fieldCode]: (current[fieldCode] || []).filter((_, i) => i !== index) }));
-    setFotos((current) => current.filter((_, i) => !(current[i] === fieldPhotos[fieldCode]?.[index])));
-    setPreviews((current) => current.filter((_, i) => current[i] !== preview));
+    const removedFile = fieldPhotos[fieldCode]?.[index];
+    setFotos((current) => current.filter((file) => file !== removedFile));
   }
 
 
@@ -1110,10 +1107,8 @@ export default function FormPage() {
 
        */
 
-      previews.forEach((url) => URL.revokeObjectURL(url));
-
+      Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
       setFotos([]);
-      setPreviews([]);
       setFieldPhotos({});
       setFieldPreviews({});
       setSelectedFieldCode(selectedEvent.columns[0]?.kode_kolom || "");
