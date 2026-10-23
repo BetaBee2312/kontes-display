@@ -208,56 +208,6 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Daftar event tidak valid atau duplikat." }, { status: 400 });
     }
     for (const assignment of assignments) {
-      const ids = (Array.isArray(assignment.columns) ? assignment.columns : []).map((item) => Number(item.id_jenis_dokumentasi));
-      if (ids.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(ids).size !== ids.length) {
-        return NextResponse.json({ success: false, message: "Daftar kolom foto tidak valid atau duplikat." }, { status: 400 });
-      }
-    }
-
-    connection = await db.getConnection();
-    await connection.beginTransaction();
-
-    const [branchRows] = await connection.execute(
-      `SELECT kode_cabang FROM tb_cabang WHERE kode_cabang = ? LIMIT 1 FOR UPDATE`,
-      [kodeCabang],
-    );
-    if (!Array.isArray(branchRows) || branchRows.length === 0) {
-      await connection.rollback();
-      return NextResponse.json({ success: false, message: "Cabang tidak ditemukan." }, { status: 404 });
-    }
-
-    const [knownEvents] = await connection.query(`SELECT id FROM tb_event`);
-    const knownEventIds = new Set((knownEvents as Array<{ id: number | string }>).map((item) => Number(item.id)));
-    if (eventIds.some((id) => !knownEventIds.has(id))) {
-      await connection.rollback();
-      return NextResponse.json({ success: false, message: "Terdapat event yang tidak terdaftar." }, { status: 400 });
-    }
-
-    const fieldIds = assignments.flatMap((assignment) =>
-      (Array.isArray(assignment.columns) ? assignment.columns : []).map((field) => Number(field.id_jenis_dokumentasi))
-    );
-    const [knownFields] = await connection.query(`SELECT id FROM tb_jenis_dokumentasi`);
-    const knownFieldIds = new Set((knownFields as Array<{ id: number | string }>).map((item) => Number(item.id)));
-    if (fieldIds.some((id) => !knownFieldIds.has(id))) {
-      await connection.rollback();
-      return NextResponse.json({ success: false, message: "Terdapat jenis dokumentasi yang tidak aktif atau tidak dikenal." }, { status: 400 });
-    }
-
-    const submittedEventIds = new Set(eventIds);
-    const [existingAssignments] = await connection.execute(
-      `SELECT id_event FROM tb_event_cabang WHERE kode_cabang = ?`,
-      [kodeCabang],
-    );
-    for (const row of existingAssignments as Array<{ id_event: number | string }>) {
-      if (!submittedEventIds.has(Number(row.id_event))) {
-        await connection.execute(
-          `UPDATE tb_event_cabang SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
-          [kodeCabang, Number(row.id_event)],
-        );
-      }
-    }
-
-    for (const assignment of assignments) {
       const idEvent = Number(assignment.id_event);
       const active = assignment.aktif === true || Number(assignment.aktif) === 1;
       await connection.execute(
