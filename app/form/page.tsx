@@ -590,6 +590,17 @@ export default function FormPage() {
 
 
 
+      if (result.code === "CONFIG_NOT_INSTALLED") {
+        await Swal.fire({
+          icon: "error",
+          title: "Konfigurasi Belum Disiapkan",
+          text: result.message || "Administrator perlu menyiapkan konfigurasi event cabang terlebih dahulu.",
+          confirmButtonText: "Mengerti",
+          confirmButtonColor: "#2563eb",
+        });
+        return;
+      }
+
       if (!Array.isArray(result.data?.events) || result.data.events.length === 0) {
         await Swal.fire({
           icon: "warning",
