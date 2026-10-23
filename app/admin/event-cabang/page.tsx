@@ -157,7 +157,7 @@ export default function BranchEventConfigPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <main className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-3 sm:p-6 lg:p-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Access control</p>
@@ -173,7 +173,7 @@ export default function BranchEventConfigPage() {
       {(error || message) && <div role="status" className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>{error || message}</div>}
 
       {loading ? <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">Memuat data cabang dan event...</div> : (
-        <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:gap-6">
           <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div className="border-b border-slate-200 p-4">
               <h2 className="font-semibold text-slate-900">Pilih Cabang</h2>
@@ -181,7 +181,7 @@ export default function BranchEventConfigPage() {
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari kode/nama cabang..."
                 className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
             </div>
-            <div className="max-h-[65vh] overflow-y-auto p-2">
+            <div className="max-h-[38vh] overflow-y-auto p-2 sm:max-h-[50vh] xl:max-h-[calc(100vh-18rem)]">
               {visibleBranches.map((item) => (
                 <button key={String(item.kode_cabang)} type="button" onClick={() => { setSelectedBranch(String(item.kode_cabang)); setError(""); setMessage(""); }}
                   className={`mb-1 w-full rounded-lg p-3 text-left transition ${selectedBranch === String(item.kode_cabang) ? "bg-blue-50 ring-1 ring-blue-200" : "hover:bg-slate-50"}`}>
@@ -240,7 +240,7 @@ export default function BranchEventConfigPage() {
                       </div>
                       <div className="p-4 sm:p-5">
                         <p className="mb-3 text-sm font-semibold text-slate-800">Kolom foto yang ditampilkan</p>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                           {config.columns.map((col) => {
                             const field = fields.find((item) => String(item.id) === col.id_jenis_dokumentasi);
                             if (!field) return null;
