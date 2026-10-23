@@ -337,12 +337,12 @@ export default function EventAdminPage() {
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <p className="text-sm font-medium text-slate-500">Total Event</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{loading ? "—" : eventList.length.toLocaleString("id-ID")}</p>
-          <p className="mt-1 text-xs text-slate-400">Data dari tb_event</p>
+          
         </div>
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <p className="text-sm font-medium text-slate-500">Hasil Pencarian</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{loading ? "—" : filteredEvents.length.toLocaleString("id-ID")}</p>
-          <p className="mt-1 text-xs text-slate-400">Event sesuai kata kunci</p>
+          
         </div>
       </div>
 
@@ -435,13 +435,13 @@ export default function EventAdminPage() {
         <div className="border-b border-slate-200 bg-slate-50/70 p-4 sm:p-5">
           <div className="flex flex-col gap-1">
             <h3 className="font-semibold text-slate-900">Master Jenis Dokumentasi</h3>
-            <p className="text-sm text-slate-500">Contoh: Hangmob, Voucher, Floor Display. Nama dan kode yang sama hanya boleh dibuat sekali.</p>
+            
           </div>
           <form onSubmit={(event) => void createPhotoField(event)} className="mt-4 flex flex-col gap-3 sm:flex-row">
             <div className="min-w-0 flex-1">
               <label htmlFor="master-photo-field" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nama jenis dokumentasi</label>
               <input id="master-photo-field" value={newFieldName} onChange={(event) => setNewFieldName(event.target.value)} maxLength={100} placeholder="Contoh: Floor Display" className={inputClass} />
-              <p className="mt-1.5 text-xs text-slate-500">Kode otomatis: <span className="font-mono">{draftFieldCode || "nama_kolom"}</span></p>
+              
               {duplicateField && <p className="mt-1 text-xs font-medium text-amber-700">Sudah terdaftar sebagai {duplicateField.nama_kolom} ({duplicateField.kode_kolom}).</p>}
             </div>
             <button type="submit" disabled={fieldBusy || !newFieldName.trim() || !draftFieldCode || Boolean(duplicateField)} className="rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40 sm:self-end">{fieldBusy ? "Memproses..." : "Tambah jenis"}</button>
@@ -521,7 +521,7 @@ export default function EventAdminPage() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Master Data</p>
                 <h2 id="event-form-title" className="mt-1 text-xl font-semibold text-slate-900">{editingKode === null ? "Tambah Event" : "Edit Event"}</h2>
-                <p className="mt-1 text-sm text-slate-500">Kode event digunakan sebagai identitas event di sistem.</p>
+                
               </div>
               <button type="button" onClick={closeForm} disabled={saving} aria-label="Tutup form" className="rounded-lg px-2 py-1 text-2xl leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
             </div>
@@ -534,7 +534,7 @@ export default function EventAdminPage() {
               <div>
                 <label htmlFor="kode_event" className="mb-1.5 block text-sm font-medium text-slate-700">Kode Event *</label>
                 <input id="kode_event" value={form.kode_event} onChange={(event) => { setCodeTouched(true); setForm((current) => ({ ...current, kode_event: slugify(event.target.value) })); }} required className={inputClass} placeholder="Contoh: milkypedia" />
-                <p className="mt-1.5 text-xs text-slate-400">Gunakan huruf kecil, angka, dan garis bawah. Kode otomatis mengikuti nama event sampai diedit manual.</p>
+                
               </div>
               <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                 <button type="button" onClick={closeForm} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50">Batal</button>
