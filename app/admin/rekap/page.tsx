@@ -403,9 +403,42 @@ export default function RekapAdminPage() {
             <h2 className="font-semibold text-slate-900">Ringkasan — {modes.find((item) => item.value === mode)?.label || "Rekap"}</h2>
             <p className="mt-1 text-sm text-slate-500">{numberFormat.format(rows.length)} baris ringkasan{lastLoaded ? ` · diperbarui ${lastLoaded}` : ""}</p>
           </div>
-          <span className="text-xs text-slate-400">Geser tabel ke samping untuk melihat kolom lainnya</span>
+          <span className="text-xs text-slate-400">Tampilan kartu di mobile</span>
         </div>
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-3 sm:hidden">
+          {loading ? (
+            <div className="rounded-xl border border-slate-200 p-5 text-center text-sm text-slate-500">Memuat data rekap...</div>
+          ) : rows.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 px-4 py-9 text-center">
+              <p className="font-medium text-slate-700">Belum ada data untuk filter ini</p>
+              <p className="mt-1 text-sm text-slate-500">Ubah filter atau periksa apakah dokumentasi sudah masuk ke database.</p>
+            </div>
+          ) : rows.map((row, index) => {
+            const title = mode === "month" ? formatMonth(row.bulan || "") : mode === "day" ? formatDate(row.tanggal || "") : mode === "event" ? (row.nama_event || "Event tanpa nama") : (row.nama_cabang || "Cabang tanpa nama");
+            return (
+              <article key={`mobile-${mode}-${index}`} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="break-words font-semibold text-slate-900">{title}</h3>
+                    {(mode === "branch" || mode === "branch_event") && <p className="mt-1 font-mono text-xs text-slate-500">{row.kode_cabang}</p>}
+                    {mode === "branch_event" && <p className="mt-1 break-words text-sm text-slate-600">{row.nama_event}</p>}
+                  </div>
+                  <div className="shrink-0 rounded-lg bg-blue-50 px-3 py-2 text-right">
+                    <p className="text-lg font-bold tabular-nums text-blue-700">{numberFormat.format(row.total_dokumentasi)}</p>
+                    <p className="text-[10px] font-medium text-blue-600">Dokumentasi</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 text-xs sm:grid-cols-3">
+                  {(mode === "month" || mode === "day") && <div><p className="text-slate-400">{mode === "month" ? "Bulan" : "Tanggal"}</p><p className="mt-1 font-medium text-slate-700">{mode === "month" ? formatMonth(row.bulan || "") : formatDate(row.tanggal || "")}</p></div>}
+                  {(mode === "month" || mode === "day" || mode === "event") && <div><p className="text-slate-400">Cabang</p><p className="mt-1 font-medium text-slate-700">{numberFormat.format(row.jumlah_cabang || 0)}</p></div>}
+                  {mode !== "branch_event" && <div><p className="text-slate-400">Event</p><p className="mt-1 font-medium text-slate-700">{numberFormat.format(row.jumlah_event || 0)}</p></div>}
+                  {(mode === "event" || mode === "branch" || mode === "branch_event") && <div><p className="text-slate-400">Hari aktif</p><p className="mt-1 font-medium text-slate-700">{numberFormat.format(row.jumlah_hari || 0)}</p></div>}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[680px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>{headers.map((header) => <th key={header} className="px-4 py-3.5 font-semibold sm:px-5">{header}</th>)}</tr>
