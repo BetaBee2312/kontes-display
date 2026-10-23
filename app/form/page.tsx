@@ -1016,37 +1016,13 @@ export default function FormPage() {
 
         ================================================= */}
 
-        {error && (
-
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
-
-            {error}
-
-          </div>
-
-        )}
-
-
-
-        {/* =================================================
+{/* =================================================
 
             SUCCESS
 
         ================================================= */}
 
-        {message && (
-
-          <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
-
-            {message}
-
-          </div>
-
-        )}
-
-
-
-        {/* =================================================
+{/* =================================================
 
             FORM
 
