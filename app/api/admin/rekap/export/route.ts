@@ -121,6 +121,7 @@ export async function GET(request: NextRequest) {
       { header: "Kode Cabang", key: "kode_cabang", width: 16 },
       { header: "Nama Cabang", key: "nama_cabang", width: 30 },
       { header: "Event", key: "nama_event", width: 28 },
+      { header: "Jenis Dokumentasi", key: "nama_kolom", width: 24 },
       { header: "Tanggal Dokumentasi", key: "tanggal", width: 18 },
       { header: "Waktu Upload", key: "waktu_upload", width: 23 },
       { header: "Foto", key: "foto", width: 16 },
@@ -146,6 +147,7 @@ export async function GET(request: NextRequest) {
         doc.kode_cabang,
         doc.nama_cabang,
         doc.nama_event,
+        doc.nama_kolom || doc.kode_kolom || "Foto Dokumentasi",
         doc.tanggal,
         doc.waktu_upload || doc.tanggal,
         "",
@@ -177,21 +179,21 @@ export async function GET(request: NextRequest) {
             // aktual (rowNumber - 1), bukan baris header yang duplikat.
             // Offset fractional membuat thumbnail rata tengah di sel H.
             detail.addImage(imageId, {
-              tl: { col: 7.24, row: rowNumber - 1 + 0.18 },
+              tl: { col: 8.24, row: rowNumber - 1 + 0.18 },
               ext: { width: 60, height: 60 },
               editAs: "oneCell",
             });
           } catch (imageError) {
             console.warn("Foto dilewati saat export:", doc.foto, imageError);
-            row.getCell(8).value = doc.foto;
+            row.getCell(9).value = doc.foto;
           }
         } else {
-          row.getCell(8).value = doc.foto;
+          row.getCell(9).value = doc.foto;
         }
       }
     }
     detail.views = [{ state: "frozen", ySplit: 1 }];
-    detail.autoFilter = { from: "A1", to: "H1" };
+    detail.autoFilter = { from: "A1", to: "I1" };
 
     // Open the workbook on actual branch submissions, not only the aggregate count sheet.
     workbook.views = [

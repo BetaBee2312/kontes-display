@@ -33,6 +33,7 @@ export type DocumentationRow = {
   waktu_upload: string | null;
   foto: string | null;
   kode_kolom?: string | null;
+  nama_kolom?: string | null;
 };
 
 export const REPORT_MODES: ReportMode[] = [
@@ -318,10 +319,17 @@ export async function getDocumentationRows(
       d.nama_event,
       d.tanggal,
       d.waktu_upload,
-      d.foto
+      d.foto,
+      d.kode_kolom,
+      COALESCE(
+        NULLIF(TRIM(jd.nama_kolom), ''),
+        NULLIF(TRIM(d.kode_kolom), ''),
+        'Foto Dokumentasi'
+      ) AS nama_kolom
     FROM (${unionSql}) d
     LEFT JOIN tb_cabang c
       ON CAST(c.kode_cabang AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci = d.kode_cabang
+    LEFT JOIN tb_jenis_dokumentasi jd ON jd.kode_kolom = d.kode_kolom
     ${whereSql}
     ORDER BY d.tanggal DESC, d.waktu_upload DESC, d.kode_cabang ASC, d.id DESC
     ${Number.isInteger(limit) && Number(limit) > 0 ? "LIMIT ?" : ""}
@@ -337,6 +345,8 @@ export async function getDocumentationRows(
     tanggal: String(row.tanggal).slice(0, 10),
     waktu_upload: row.waktu_upload ? String(row.waktu_upload) : String(row.tanggal),
     foto: row.foto ? String(row.foto) : null,
+    kode_kolom: row.kode_kolom ? String(row.kode_kolom) : null,
+    nama_kolom: String(row.nama_kolom || row.kode_kolom || "Foto Dokumentasi"),
   }));
 }
 
