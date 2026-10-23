@@ -117,7 +117,6 @@ export async function GET(request: NextRequest) {
     const detail = workbook.addWorksheet("Detail Dokumentasi");
     detail.columns = [
       { header: "No", key: "no", width: 8 },
-      { header: "ID Dokumentasi", key: "id", width: 34 },
       { header: "Kode Cabang", key: "kode_cabang", width: 16 },
       { header: "Nama Cabang", key: "nama_cabang", width: 30 },
       { header: "Event", key: "nama_event", width: 28 },
@@ -143,7 +142,6 @@ export async function GET(request: NextRequest) {
       const rowNumber = index + 2;
       const row = detail.addRow([
         index + 1,
-        doc.id,
         doc.kode_cabang,
         doc.nama_cabang,
         doc.nama_event,
@@ -178,14 +176,17 @@ export async function GET(request: NextRequest) {
             // Kolom Foto adalah H (index 7). Posisi menggunakan baris data
             // aktual (rowNumber - 1), bukan baris header yang duplikat.
             // Offset fractional membuat thumbnail rata tengah di sel H.
+            // Foto ada di kolom H setelah kolom ID dihilangkan. Anchor
+            // berada dalam cell foto; editAs oneCell membuat gambar bergerak
+            // bersama sel saat baris/kolom dipindah atau dihapus.
             detail.addImage(imageId, {
-              tl: { col: 8.24, row: rowNumber - 1 + 0.18 },
-              ext: { width: 60, height: 60 },
+              tl: { col: 7.08, row: rowNumber - 1 + 0.08 },
+              br: { col: 7.92, row: rowNumber - 1 + 0.92 },
               editAs: "oneCell",
             });
           } catch (imageError) {
             console.warn("Foto dilewati saat export:", doc.foto, imageError);
-            row.getCell(9).value = doc.foto;
+            row.getCell(8).value = "Foto tidak dapat disematkan";
           }
         } else {
           row.getCell(9).value = doc.foto;
@@ -193,7 +194,7 @@ export async function GET(request: NextRequest) {
       }
     }
     detail.views = [{ state: "frozen", ySplit: 1 }];
-    detail.autoFilter = { from: "A1", to: "I1" };
+    detail.autoFilter = { from: "A1", to: "H1" };
 
     // Open the workbook on actual branch submissions, not only the aggregate count sheet.
     workbook.views = [
