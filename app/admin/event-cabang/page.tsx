@@ -5,12 +5,7 @@ import Swal from "sweetalert2";
 
 type Branch = { kode_cabang: string | number; nama_cabang: string; singkatan?: string };
 type EventItem = { id: number | string; kode_event: string; nama_event: string; aktif?: number | boolean };
-type Field = { id: number | string; kode_kolom: string; nama_kolom: string; aktif: number | boolean };
 type ExistingAssignment = { id_event: number | string; kode_cabang: string | number; aktif: number | boolean };
-type ExistingField = {
-  id_event: number | string; kode_cabang: string | number; id_jenis_dokumentasi: number | string;
-  aktif: number | boolean; wajib: number | boolean; urutan: number;
-};
 type Config = { id_event: string; aktif: boolean; columns: [] };
 
 function isOn(value: number | boolean | string | undefined) {
@@ -20,14 +15,12 @@ function isOn(value: number | boolean | string | undefined) {
 export default function BranchEventConfigPage() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [fields, setFields] = useState<Field[]>([]);
   const [assignments, setAssignments] = useState<ExistingAssignment[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
   const [configs, setConfigs] = useState<Config[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [fieldNameDraft, setFieldNameDraft] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,9 +30,7 @@ export default function BranchEventConfigPage() {
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal memuat konfigurasi.");
       setBranches(result.data.cabang || []);
       setEvents(result.data.events || []);
-      setFields(result.data.fields || []);
       setAssignments(result.data.assignments || []);
-      setFieldAssignments(result.data.fieldAssignments || []);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Gagal memuat konfigurasi.";
       await Swal.fire({ icon: "error", title: "Gagal memuat konfigurasi", text: message });
@@ -150,58 +141,13 @@ export default function BranchEventConfigPage() {
                   </button>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-white p-4">
-                  <h3 className="text-sm font-semibold text-slate-900">Jenis Kolom Foto</h3>
-                  <p className="mt-1 text-xs text-slate-500">Tambahkan jenis dokumentasi baru. Setelah dibuat, aktifkan pada event cabang yang membutuhkannya.</p>
-                  <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={(event) => { event.preventDefault(); void addField(); }}>
-                    <div className="min-w-0 flex-1">
-                      <label htmlFor="new-photo-field" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nama jenis dokumentasi</label>
-                      <input id="new-photo-field" value={fieldNameDraft} onChange={(event) => setFieldNameDraft(event.target.value)} maxLength={100} placeholder="Contoh: Foto Rak Promo" className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
-                      <p className="mt-1.5 text-xs text-slate-500">Kode otomatis: <span className="font-mono">{draftCode || "nama_kolom"}</span></p>
-                      {duplicateField && <p className="mt-1 text-xs font-medium text-amber-700">Nama/kode sudah ada: {duplicateField.nama_kolom} ({duplicateField.kode_kolom})</p>}
-                    </div>
-                    <button type="submit" disabled={saving || !fieldNameDraft.trim() || !draftCode || Boolean(duplicateField)} className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40 sm:self-end">
-                      {saving ? "Memproses..." : "Tambah kolom"}
-                    </button>
-                  </form>
-                  <div className="mt-5 border-t border-slate-100 pt-4">
-                    <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                      <h4 className="text-sm font-semibold text-slate-800">Master kolom foto</h4>
-                      <span className="text-xs text-slate-500">{fields.length} jenis terdaftar</span>
-                    </div>
-                    {fields.length === 0 ? (
-                      <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">Belum ada jenis dokumentasi.</p>
-                    ) : (
-                      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                        {fields.map((field) => {
-                          const usageCount = fieldAssignments.filter((item) => Number(item.id_jenis_dokumentasi) === Number(field.id)).length;
-                          return (
-                            <div key={String(field.id)} className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
-                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">
-                                {field.nama_kolom.trim().slice(0, 1).toUpperCase()}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-semibold text-slate-900">{field.nama_kolom}</p>
-                                <p className="mt-1 truncate font-mono text-xs text-slate-500">{field.kode_kolom}</p>
-                                <p className="mt-1 text-[11px] text-slate-400">{usageCount ? `Terkait ${usageCount} konfigurasi` : "Belum digunakan"}</p>
-                              </div>
-                              <button type="button" onClick={() => void deleteField(field)} disabled={saving || usageCount > 0} title={usageCount > 0 ? "Nonaktifkan dari konfigurasi event terlebih dahulu" : "Hapus jenis dokumentasi"} aria-label={`Hapus ${field.nama_kolom}`} className="shrink-0 rounded-lg border border-red-200 px-2.5 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30">Hapus</button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {events.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Belum ada event di master data. Tambahkan event terlebih dahulu.</div>}
-
-                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
-                  <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div className="rounded-xl border border-slate-200 bg-white p-5">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <h3 className="font-semibold text-slate-900">Akses Event untuk Cabang</h3>
-                      <p className="mt-1 text-sm text-slate-500">Pilih event yang bisa digunakan cabang ini. Kolom dokumentasi diatur terpusat dari menu Data Event.</p>
+                      <p className="mt-1 text-sm text-slate-500">Pilih event yang bisa digunakan cabang ini. Kolom foto ditetapkan di menu Data Event.</p>
                     </div>
-                    <span className="text-xs font-medium text-slate-500">{configs.filter((config) => config.aktif).length} dari {configs.length} event aktif</span>
+                    <span className="text-xs font-medium text-slate-500">{configs.filter((config) => config.aktif).length} dari {configs.length} aktif</span>
                   </div>
                   <div className="mt-4 space-y-2">
                     {configs.map((config) => {
@@ -209,7 +155,7 @@ export default function BranchEventConfigPage() {
                       if (!event) return null;
                       return (
                         <label key={config.id_event} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition ${config.aktif ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
-                          <input type="checkbox" checked={config.aktif} onChange={(event) => updateEvent(config.id_event, event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                          <input type="checkbox" checked={config.aktif} onChange={(event) => updateEvent(config.id_event, event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
                           <span className="min-w-0 flex-1">
                             <span className="block text-sm font-semibold text-slate-900">{event.nama_event}</span>
                             <span className="mt-1 block font-mono text-xs text-slate-500">{event.kode_event}</span>
