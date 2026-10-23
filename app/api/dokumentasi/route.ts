@@ -112,18 +112,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "Dokumentasi berhasil disimpan.",
-      data: {
-        id: documentId,
-        kode_cabang: kodeCabang,
-        nama_cabang: String(branch.nama_cabang),
-        event: String(event.nama_event),
-        kode_event: String(event.kode_event),
-        kode_kolom: field.kode_kolom,
-        nama_kolom: field.nama_kolom,
-        tanggal,
-        foto: fotoUrl,
-        table: tableName,
-      },
     });
   } catch (error) {
     if (savedFilePath) await unlink(savedFilePath).catch(() => undefined);
