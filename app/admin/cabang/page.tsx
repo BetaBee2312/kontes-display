@@ -812,7 +812,7 @@ export default function CabangAdminPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5 sm:px-6">
 
-              {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+
 
               <div className="grid gap-4 sm:grid-cols-2">
 
@@ -900,9 +900,7 @@ export default function CabangAdminPage() {
             </div>
 
             <form onSubmit={handleBulkEdit} className="space-y-5 px-5 py-5 sm:px-6">
-              {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</div>
-              )}
+
 
               <div className="rounded-lg border border-slate-200 p-4">
                 <label className="flex cursor-pointer items-start gap-3">
