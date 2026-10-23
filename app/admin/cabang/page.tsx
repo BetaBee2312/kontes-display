@@ -538,7 +538,7 @@ export default function CabangAdminPage() {
 
           <p className="mt-3 text-3xl font-bold text-slate-900">{loading ? "—" : cabangList.length.toLocaleString("id-ID")}</p>
 
-          <p className="mt-1 text-xs text-slate-400">Data dari tb_cabang</p>
+          
 
         </div>
 
@@ -556,7 +556,7 @@ export default function CabangAdminPage() {
 
           <p className="mt-3 text-3xl font-bold text-slate-900">{loading ? "—" : cabangList.filter((item) => /(?:express|xpress)/i.test(item.nama_cabang)).length.toLocaleString("id-ID")}</p>
 
-          <p className="mt-1 text-xs text-slate-400">Nama cabang mengandung Express atau Xpress</p>
+          
 
         </div>
 
@@ -578,7 +578,7 @@ export default function CabangAdminPage() {
 
           </p>
 
-          <p className="mt-1 text-xs text-slate-400">Cluster berbeda dalam data cabang</p>
+          
 
         </div>
 
@@ -839,7 +839,7 @@ export default function CabangAdminPage() {
 
                 <h2 id="cabang-form-title" className="mt-1 text-xl font-bold text-slate-900">{editingKode === null ? "Tambah Cabang" : "Edit Cabang"}</h2>
 
-                <p className="mt-1 text-sm text-slate-500">Kolom bertanda * wajib diisi.</p>
+                
 
               </div>
 
@@ -936,7 +936,7 @@ export default function CabangAdminPage() {
             <div className="flex items-start justify-between border-b border-slate-200 px-5 py-4 sm:px-6">
               <div>
                 <h2 id="bulk-edit-title" className="text-lg font-semibold text-slate-900">Edit {selectedCodes.length} cabang</h2>
-                <p className="mt-1 text-sm text-slate-500">Pilih field yang ingin disamakan untuk semua cabang terpilih.</p>
+                
               </div>
               <button type="button" onClick={closeBulkEdit} disabled={bulkEditing} aria-label="Tutup edit massal" className="rounded-lg px-2 py-1 text-2xl leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50">×</button>
             </div>
@@ -954,7 +954,7 @@ export default function CabangAdminPage() {
                   />
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-slate-800">Perbarui DC Support</span>
-                    <span className="mt-1 block text-xs text-slate-500">Terapkan nilai DC Support yang sama ke semua pilihan.</span>
+                    
                   </span>
                 </label>
                 {bulkEditDcEnabled && (
@@ -977,7 +977,7 @@ export default function CabangAdminPage() {
                   />
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-slate-800">Perbarui Cluster</span>
-                    <span className="mt-1 block text-xs text-slate-500">Terapkan cluster yang sama ke semua pilihan.</span>
+                    
                   </span>
                 </label>
                 {bulkEditClusterEnabled && (
@@ -990,7 +990,7 @@ export default function CabangAdminPage() {
                 )}
               </div>
 
-              <p className="text-xs leading-5 text-slate-500">Kode cabang, nama, dan singkatan tidak diubah melalui edit massal ini.</p>
+              
 
               <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
                 <button type="button" onClick={closeBulkEdit} disabled={bulkEditing} className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Batal</button>
