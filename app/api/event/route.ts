@@ -32,7 +32,6 @@ export async function GET(request: NextRequest) {
     });
 
     const ids = events.map((event) => Number(event.id)).filter(Number.isSafeInteger);
-    const ids = events.map((event) => Number(event.id)).filter(Number.isSafeInteger);
     const [fieldRows] = await db.execute(
       `SELECT ek.id_event, jd.id, jd.kode_kolom, jd.nama_kolom, ek.urutan, ek.wajib
        FROM tb_event_kolom ek
