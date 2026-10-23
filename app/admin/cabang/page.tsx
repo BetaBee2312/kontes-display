@@ -642,8 +642,48 @@ export default function CabangAdminPage() {
 
 
 
-        <div className="overflow-x-auto">
-
+        <div className="space-y-3 p-3 sm:hidden">
+          {loading ? (
+            <div className="rounded-xl border border-slate-200 p-5 text-center text-sm text-slate-500">Memuat data cabang...</div>
+          ) : filteredCabang.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 px-5 py-10 text-center">
+              <p className="font-semibold text-slate-700">{search ? "Cabang tidak ditemukan" : "Belum ada data cabang"}</p>
+              <p className="mt-1 text-sm text-slate-500">{search ? "Coba kata kunci lain." : "Tambahkan cabang pertama untuk memulai."}</p>
+            </div>
+          ) : (
+            <>
+              <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+                <input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} disabled={bulkDeleting || bulkEditing || filteredCabang.length === 0} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                Pilih semua ({filteredCabang.length})
+              </label>
+              {filteredCabang.map((item) => {
+                const code = String(item.kode_cabang);
+                const selected = selectedCodes.includes(code);
+                return (
+                  <article key={code} className={`rounded-xl border bg-white p-4 shadow-sm ${selected ? "border-blue-300 ring-2 ring-blue-50" : "border-slate-200"}`}>
+                    <div className="flex items-start gap-3">
+                      <input type="checkbox" aria-label={`Pilih ${item.nama_cabang}`} checked={selected} onChange={() => toggleCabang(code)} disabled={bulkDeleting || bulkEditing} className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="break-words font-semibold text-slate-900">{item.nama_cabang}</h3>
+                        <p className="mt-1 font-mono text-xs text-slate-500">Kode {code}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">{item.singkatan || "Tanpa singkatan"}</span>
+                          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-600">DC: {item.dc_support || "—"}</span>
+                          <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs text-slate-600">Cluster: {item.cluster || "—"}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                      <button type="button" onClick={() => openEdit(item)} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit</button>
+                      <button type="button" onClick={() => void handleDelete(item)} disabled={deletingKode === code} className="rounded-lg border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">{deletingKode === code ? "Menghapus..." : "Hapus"}</button>
+                    </div>
+                  </article>
+                );
+              })}
+            </>
+          )}
+        </div>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[900px] text-left text-sm">
 
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
