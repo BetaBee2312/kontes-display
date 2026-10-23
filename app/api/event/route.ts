@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
        FROM tb_event_cabang ec
        INNER JOIN tb_event e ON e.id = ec.id_event
        WHERE ec.kode_cabang = ? AND ec.aktif = 1
-         AND (e.aktif = 1 OR e.aktif IS NULL)
        ORDER BY e.nama_event ASC`,
       [kodeCabang],
     );
