@@ -225,6 +225,8 @@ export default function FormPage() {
 
 
 
+    const kodeCabang = String(cabang.kode_cabang);
+
     async function loadEvents() {
 
       setLoadingEvent(true);
@@ -234,7 +236,7 @@ export default function FormPage() {
       try {
 
         const response =
-          await fetch(`/api/event?kode_cabang=${encodeURIComponent(String(cabang.kode_cabang))}`);
+          await fetch(`/api/event?kode_cabang=${encodeURIComponent(kodeCabang)}`);
 
 
 
