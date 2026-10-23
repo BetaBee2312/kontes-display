@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
             row.getCell(8).value = "Foto tidak dapat disematkan";
           }
         } else {
-          row.getCell(9).value = doc.foto;
+          row.getCell(8).value = "Foto tidak dapat disematkan";
         }
       }
     }
