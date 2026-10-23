@@ -674,7 +674,7 @@ export default function FormPage() {
     setFieldPhotos({});
     setFieldPreviews({});
     setFotos([]);
-    setPreviews([]);
+    setFieldPreviews({});
     setEventSearch("");
 
     setEventOpen(false);
@@ -842,13 +842,6 @@ export default function FormPage() {
   }
 
 
-
-  function removeFoto(index: number) {
-    const previewUrl = previews[index];
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setFotos((current) => current.filter((file) => file !== fotos[index]));
-    setMessage("Foto dihapus dari daftar upload.");
-  }
 
   function removeFieldPhoto(fieldCode: string, index: number) {
     const preview = fieldPreviews[fieldCode]?.[index];
