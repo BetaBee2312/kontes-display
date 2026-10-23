@@ -698,10 +698,12 @@ export default function FormPage() {
   ) {
 
     setError("");
-
     setMessage("");
-
-
+    if (!selectedFieldCode) {
+      setError("Pilih jenis dokumentasi terlebih dahulu.");
+      e.target.value = "";
+      return;
+    }
 
     const selectedFiles = Array.from(e.target.files ?? []);
 
