@@ -125,15 +125,27 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Kode event wajib diisi." }, { status: 400 });
     }
 
+    const [eventRows] = await db.execute(
+      "SELECT id FROM tb_event WHERE kode_event = ? LIMIT 1",
+      [kodeEvent]
+    );
+    if (!Array.isArray(eventRows) || eventRows.length === 0) {
+      return NextResponse.json({ success: false, message: "Event tidak ditemukan." }, { status: 404 });
+    }
+    const eventId = Number((eventRows[0] as { id: number | string }).id);
+
     const [result] = await db.execute(
       "DELETE FROM tb_event WHERE kode_event = ?",
       [kodeEvent]
     );
-
     const affectedRows = Number((result as { affectedRows?: number }).affectedRows ?? 0);
     if (affectedRows === 0) {
       return NextResponse.json({ success: false, message: "Event tidak ditemukan." }, { status: 404 });
     }
+
+    // Clean access/configuration records after the event itself is confirmed deleted.
+    await db.execute("DELETE FROM tb_event_kolom WHERE id_event = ?", [eventId]);
+    await db.execute("DELETE FROM tb_event_cabang WHERE id_event = ?", [eventId]);
 
     return NextResponse.json({ success: true, message: "Event berhasil dihapus." });
   } catch (error) {
