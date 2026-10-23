@@ -211,7 +211,7 @@ export default function EventAdminPage() {
           </div>
         </div>
 
-        {error && !formOpen && <div className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[650px] text-left text-sm">
@@ -263,7 +263,7 @@ export default function EventAdminPage() {
               <button type="button" onClick={closeForm} disabled={saving} aria-label="Tutup form" className="rounded-lg px-2 py-1 text-2xl leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5 sm:px-6">
-              {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+
               <div>
                 <label htmlFor="nama_event" className="mb-1.5 block text-sm font-medium text-slate-700">Nama Event *</label>
                 <input id="nama_event" value={form.nama_event} onChange={(event) => setForm((current) => ({ ...current, nama_event: event.target.value, kode_event: codeTouched ? current.kode_event : slugify(event.target.value) }))} required className={inputClass} placeholder="Contoh: Milkypedia" />
