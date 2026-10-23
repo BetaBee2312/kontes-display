@@ -311,11 +311,7 @@ export default function BranchEventConfigPage() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h3 className="font-semibold text-slate-900">Akses Event {selectedBranches.length > 1 ? "untuk Semua Cabang Terpilih" : "untuk Cabang"}</h3>
-                    <p className="mt-1 text-sm text-slate-500">
-                      {selectedBranches.length > 1
-                        ? "Centang atau hapus centang event untuk menerapkan status yang sama ke seluruh cabang. Status campuran yang tidak disentuh tidak akan diubah."
-                        : "Pilih event yang bisa digunakan cabang ini. Kolom foto ditetapkan di menu Data Event."}
-                    </p>
+
                   </div>
                   <span className="text-xs font-medium text-slate-500">
                     {selectedBranches.length > 1
