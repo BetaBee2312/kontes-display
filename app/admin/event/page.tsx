@@ -403,7 +403,6 @@ export default function EventAdminPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-blue-600">Konfigurasi dokumentasi</p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">Kolom Foto per Event</h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">Buat jenis dokumentasi satu kali, lalu centang event yang memakai kolom tersebut. Pengaturan ini berlaku untuk semua cabang.</p>
           </div>
           <input value={fieldSearch} onChange={(event) => setFieldSearch(event.target.value)} placeholder="Cari jenis kolom..." className={`${inputClass} sm:max-w-xs`} />
         </div>
