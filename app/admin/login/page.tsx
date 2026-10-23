@@ -69,21 +69,14 @@ export default function AdminLoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 text-slate-900">
-      <section className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-6 sm:px-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white">
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-6 w-6">
-                <path d="M14 2.75H6.5A1.75 1.75 0 0 0 4.75 4.5v15A1.75 1.75 0 0 0 6.5 21.25h11A1.75 1.75 0 0 0 19.25 19.5V8Z" />
-                <path d="M14 2.75V8h5.25M8 12h8M8 15.5h8" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Documentation System</p>
-              <p className="mt-0.5 text-xs text-slate-500">Admin Console</p>
-            </div>
+      <section className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.10)]">
+        <div className="px-6 pb-5 pt-8 text-center sm:px-8 sm:pt-10">
+          <div className="mx-auto flex w-full max-w-[250px] items-center justify-center rounded-2xl bg-white px-3 py-2">
+            <img src="/logo/logoyomart.png" alt="Yomart" className="h-auto w-full object-contain" />
           </div>
-          <h1 className="mt-7 text-2xl font-semibold tracking-tight">Masuk ke admin</h1>
+          <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-600">Marketing Documentation</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">Masuk ke admin</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-500">Kelola cabang, event, dan dokumentasi marketing.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6 sm:px-8">
