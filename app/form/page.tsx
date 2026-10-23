@@ -946,15 +946,13 @@ if (!cabang) {
 
 
 
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-
-            Masukkan kode cabang terlebih dahulu.
-
-            Setelah cabang ditemukan, formulir
-
-            dokumentasi akan muncul.
-
-          </p>
+          <div className="mt-4">
+            <img
+              src="/logo/logoyomart.png"
+              alt="Yomart"
+              className="h-auto w-full max-w-[280px] object-contain object-left"
+            />
+          </div>
 
         </div>
 
