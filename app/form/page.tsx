@@ -946,11 +946,11 @@ if (!cabang) {
 
 
 
-          <div className="mt-4">
+          <div className="mt-4 flex justify-center">
             <img
               src="/logo/logoyomart.png"
               alt="Yomart"
-              className="h-auto w-full max-w-[280px] object-contain object-left"
+              className="h-auto w-full max-w-[280px] object-contain"
             />
           </div>
 
