@@ -254,10 +254,6 @@ export async function PUT(request: NextRequest) {
           `UPDATE tb_event_cabang SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
           [kodeCabang, Number(row.id_event)],
         );
-        await connection.execute(
-          `UPDATE tb_event_cabang_kolom SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
-          [kodeCabang, Number(row.id_event)],
-        );
       }
     }
 
@@ -273,7 +269,7 @@ export async function PUT(request: NextRequest) {
     }
 
     await connection.commit();
-    return NextResponse.json({ success: true, message: "Konfigurasi event dan kolom dokumentasi berhasil disimpan." });
+    return NextResponse.json({ success: true, message: "Akses event cabang berhasil disimpan." });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => undefined);
     return databaseError(error, "Gagal menyimpan konfigurasi event cabang.");
