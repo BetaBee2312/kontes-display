@@ -488,7 +488,7 @@ export default function CabangAdminPage() {
 
   return (
 
-    <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-3 sm:p-6 lg:p-8">
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
@@ -533,7 +533,7 @@ export default function CabangAdminPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
 
           <div className="flex items-center justify-between">
 
@@ -551,7 +551,7 @@ export default function CabangAdminPage() {
 
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
 
           <div className="flex items-center justify-between">
 
@@ -569,7 +569,7 @@ export default function CabangAdminPage() {
 
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
 
           <div className="flex items-center justify-between">
 
@@ -595,7 +595,7 @@ export default function CabangAdminPage() {
 
 
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
 
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
 
