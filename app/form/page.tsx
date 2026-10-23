@@ -556,7 +556,7 @@ export default function FormPage() {
       }
 
       if (!result.success) {
-        setError(result.message || "Gagal memeriksa cabang.");
+        void Swal.fire({ icon: "error", title: "Gagal memeriksa cabang", text: result.message || "Gagal memeriksa cabang." });
         return;
       }
 
