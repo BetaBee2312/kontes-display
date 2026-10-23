@@ -32,13 +32,10 @@ export default function BranchEventConfigPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [fieldNameDraft, setFieldNameDraft] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError("");
     try {
       const response = await fetch("/api/admin/event-cabang", { cache: "no-store" });
       const result = await response.json();
@@ -50,7 +47,6 @@ export default function BranchEventConfigPage() {
       setFieldAssignments(result.data.fieldAssignments || []);
     } catch (e) {
       const message = e instanceof Error ? e.message : "Gagal memuat konfigurasi.";
-      setError(message);
       await Swal.fire({ icon: "error", title: "Gagal memuat konfigurasi", text: message });
     } finally {
       setLoading(false);
@@ -112,7 +108,7 @@ export default function BranchEventConfigPage() {
       .replace(/^_+|_+$/g, "")
       .slice(0, 50);
     if (!code) { await Swal.fire({ icon: "warning", title: "Nama kolom tidak valid", text: "Gunakan nama yang terdiri dari huruf atau angka." }); return; }
-    setError(""); setMessage("");
+   
     try {
       const response = await fetch("/api/admin/event-cabang", {
         method: "POST",
