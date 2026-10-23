@@ -34,7 +34,9 @@ export async function GET() {
       `SELECT id, kode_cabang, id_event, aktif FROM tb_event_cabang ORDER BY kode_cabang, id_event`,
     );
     const [fields] = await db.query(
-      `SELECT id, kode_kolom, nama_kolom, aktif FROM tb_jenis_dokumentasi ORDER BY nama_kolom ASC`,
+      `SELECT id, kode_kolom, nama_kolom, aktif
+       FROM tb_jenis_dokumentasi
+       ORDER BY nama_kolom ASC, id ASC`,
     );
     const [fieldAssignments] = await db.query(
       `SELECT id, kode_cabang, id_event, id_jenis_dokumentasi, urutan, wajib, aktif
@@ -63,11 +65,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Kode kolom harus berupa huruf kecil, angka, atau garis bawah; nama maksimal 100 karakter." }, { status: 400 });
     }
     const [existing] = await db.execute(
-      `SELECT id FROM tb_jenis_dokumentasi WHERE kode_kolom = ? LIMIT 1`,
-      [kode],
+      `SELECT id, nama_kolom, kode_kolom FROM tb_jenis_dokumentasi
+       WHERE kode_kolom = ? OR LOWER(TRIM(nama_kolom)) = LOWER(TRIM(?))
+       LIMIT 1`,
+      [kode, nama],
     );
     if (Array.isArray(existing) && existing.length > 0) {
-      return NextResponse.json({ success: false, message: "Kode kolom tersebut sudah digunakan. Gunakan nama yang berbeda." }, { status: 409 });
+      const duplicate = existing[0] as { nama_kolom: string; kode_kolom: string };
+      return NextResponse.json({
+        success: false,
+        code: "DUPLICATE_FIELD",
+        message: `Jenis dokumentasi "${duplicate.nama_kolom}" sudah ada dengan kode "${duplicate.kode_kolom}".`,
+      }, { status: 409 });
     }
     await db.execute(
       `INSERT INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif) VALUES (?, ?, 1)`,
@@ -80,6 +89,47 @@ export async function POST(request: NextRequest) {
     return databaseError(error, "Gagal menambahkan jenis kolom foto.");
   }
 }
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!(await getAdminUser())) return unauthorizedAdminResponse();
+    const body = await request.json() as { id_jenis_dokumentasi?: unknown };
+    const id = Number(body.id_jenis_dokumentasi);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return NextResponse.json({ success: false, message: "ID jenis dokumentasi tidak valid." }, { status: 400 });
+    }
+
+    const [fieldRows] = await db.execute(
+      `SELECT id, nama_kolom, kode_kolom FROM tb_jenis_dokumentasi WHERE id = ? LIMIT 1`,
+      [id],
+    );
+    if (!Array.isArray(fieldRows) || fieldRows.length === 0) {
+      return NextResponse.json({ success: false, message: "Jenis dokumentasi tidak ditemukan." }, { status: 404 });
+    }
+
+    const [usageRows] = await db.execute(
+      `SELECT COUNT(*) AS total FROM tb_event_cabang_kolom WHERE id_jenis_dokumentasi = ?`,
+      [id],
+    );
+    const usageCount = Number((usageRows as Array<{ total: number | string }>)[0]?.total ?? 0);
+    if (usageCount > 0) {
+      return NextResponse.json({
+        success: false,
+        code: "FIELD_IN_USE",
+        message: `Kolom masih terkait dengan ${usageCount} konfigurasi cabang/event. Nonaktifkan atau lepaskan kolom itu dari konfigurasi terlebih dahulu, lalu coba lagi.`,
+      }, { status: 409 });
+    }
+
+    await db.execute(`DELETE FROM tb_jenis_dokumentasi WHERE id = ?`, [id]);
+    return NextResponse.json({ success: true, message: "Jenis dokumentasi berhasil dihapus." });
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+    if (code === "ER_ROW_IS_REFERENCED_2") {
+      return NextResponse.json({ success: false, message: "Kolom masih digunakan oleh konfigurasi cabang/event dan tidak dapat dihapus." }, { status: 409 });
+    }
+    return databaseError(error, "Gagal menghapus jenis kolom foto.");
+  }
+}
+
 export async function PUT(request: NextRequest) {
   let connection: Awaited<ReturnType<typeof db.getConnection>> | undefined;
   try {
