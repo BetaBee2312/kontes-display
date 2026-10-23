@@ -16,9 +16,6 @@ export default function Home() {
               Dokumentasi Cabang
             </h1>
 
-            <p className="mx-auto mt-4 max-w-xl text-slate-500">
-              Sistem pengelolaan dokumentasi cabang secara terpusat.
-            </p>
           </div>
 
           {/* MENU */}
