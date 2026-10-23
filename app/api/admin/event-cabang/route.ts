@@ -34,7 +34,9 @@ export async function GET() {
       `SELECT id, kode_cabang, id_event, aktif FROM tb_event_cabang ORDER BY kode_cabang, id_event`,
     );
     const [fields] = await db.query(
-      `SELECT id, kode_kolom, nama_kolom, aktif FROM tb_jenis_dokumentasi ORDER BY nama_kolom ASC`,
+      `SELECT id, kode_kolom, nama_kolom, aktif
+       FROM tb_jenis_dokumentasi
+       ORDER BY nama_kolom ASC, id ASC`,
     );
     const [fieldAssignments] = await db.query(
       `SELECT id, kode_cabang, id_event, id_jenis_dokumentasi, urutan, wajib, aktif
