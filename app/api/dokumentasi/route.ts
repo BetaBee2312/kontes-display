@@ -153,7 +153,7 @@ export async function DELETE(request: Request) {
             : [];
         const usePhotoRefs = fotoRefs.length > 0;
 
-        if (!/^\\d+$/.test(kodeCabang)) {
+        if (!/^\d+$/.test(kodeCabang)) {
             return NextResponse.json({ success: false, message: "Kode cabang tidak valid." }, { status: 400 });
         }
         if (usePhotoRefs && fotoRefs.some((ref: string) => !/^[a-f0-9]{64}$/i.test(ref))) {
