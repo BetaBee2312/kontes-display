@@ -56,6 +56,7 @@ INSERT INTO tb_event_kolom (id_event, id_jenis_dokumentasi, urutan, wajib, aktif
 SELECT old.id_event, old.id_jenis_dokumentasi, MIN(old.urutan), MAX(old.wajib), MAX(old.aktif)
 FROM tb_event_cabang_kolom old
 GROUP BY old.id_event, old.id_jenis_dokumentasi
+HAVING MAX(old.aktif) = 1
 ON DUPLICATE KEY UPDATE
   urutan = VALUES(urutan),
   wajib = VALUES(wajib),
