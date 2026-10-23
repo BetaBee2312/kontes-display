@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 
 type Branch = { kode_cabang: string | number; nama_cabang: string; singkatan?: string };
 type EventItem = { id: number | string; kode_event: string; nama_event: string; aktif?: number | boolean };
@@ -48,7 +49,9 @@ export default function BranchEventConfigPage() {
       setAssignments(result.data.assignments || []);
       setFieldAssignments(result.data.fieldAssignments || []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal memuat konfigurasi.");
+      const message = e instanceof Error ? e.message : "Gagal memuat konfigurasi.";
+      setError(message);
+      await Swal.fire({ icon: "error", title: "Gagal memuat konfigurasi", text: message });
     } finally {
       setLoading(false);
     }
@@ -102,13 +105,13 @@ export default function BranchEventConfigPage() {
 
   async function addField() {
     const name = fieldNameDraft.trim();
-    if (!name) { setError("Nama kolom foto wajib diisi."); return; }
+    if (!name) { await Swal.fire({ icon: "warning", title: "Nama kolom wajib diisi", text: "Masukkan nama kolom dokumentasi terlebih dahulu." }); return; }
     const code = name.toLowerCase().trim().normalize("NFKD")
       .replace(/[\\u0300-\\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "")
       .slice(0, 50);
-    if (!code) { setError("Nama kolom tidak menghasilkan kode yang valid."); return; }
+    if (!code) { await Swal.fire({ icon: "warning", title: "Nama kolom tidak valid", text: "Gunakan nama yang terdiri dari huruf atau angka." }); return; }
     setError(""); setMessage("");
     try {
       const response = await fetch("/api/admin/event-cabang", {
@@ -128,10 +131,11 @@ export default function BranchEventConfigPage() {
       setEvents(refreshed.data.events || []);
       setBranches(refreshed.data.cabang || []);
       setMessage(result.message || "Kolom foto berhasil ditambahkan.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Gagal menambah kolom foto."); }
+      await Swal.fire({ icon: "success", title: "Kolom foto ditambahkan", text: result.message || "Kolom foto berhasil ditambahkan.", timer: 1700, showConfirmButton: false });
+    } catch (e) { const message = e instanceof Error ? e.message : "Gagal menambah kolom foto."; setError(message); await Swal.fire({ icon: "error", title: "Gagal menambah kolom", text: message }); }
   }
   async function save() {
-    if (!selectedBranch) { setError("Pilih cabang terlebih dahulu."); return; }
+    if (!selectedBranch) { await Swal.fire({ icon: "warning", title: "Pilih cabang", text: "Pilih cabang terlebih dahulu." }); return; }
     setSaving(true); setError(""); setMessage("");
     try {
       const response = await fetch("/api/admin/event-cabang", {
@@ -142,8 +146,11 @@ export default function BranchEventConfigPage() {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan konfigurasi.");
       setMessage(result.message || "Konfigurasi berhasil disimpan.");
+      await Swal.fire({ icon: "success", title: "Konfigurasi tersimpan", text: result.message || "Konfigurasi berhasil disimpan.", timer: 1700, showConfirmButton: false });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.");
+      const message = e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.";
+      setError(message);
+      await Swal.fire({ icon: "error", title: "Gagal menyimpan konfigurasi", text: message });
     } finally {
       setSaving(false);
     }
