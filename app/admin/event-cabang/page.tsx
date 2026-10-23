@@ -11,11 +11,7 @@ type ExistingField = {
   id_event: number | string; kode_cabang: string | number; id_jenis_dokumentasi: number | string;
   aktif: number | boolean; wajib: number | boolean; urutan: number;
 };
-type Config = {
-  id_event: string;
-  aktif: boolean;
-  columns: Array<{ id_jenis_dokumentasi: string; aktif: boolean; wajib: boolean; urutan: number }>;
-};
+type Config = { id_event: string; aktif: boolean; columns: [] };
 
 function isOn(value: number | boolean | string | undefined) {
   return value === true || Number(value) === 1;
@@ -62,22 +58,9 @@ export default function BranchEventConfigPage() {
       const assignment = assignments.find((item) =>
         String(item.kode_cabang) === branch && Number(item.id_event) === Number(event.id)
       );
-      const columns = fields.map((field, index) => {
-        const existing = fieldAssignments.find((item) =>
-          String(item.kode_cabang) === branch &&
-          Number(item.id_event) === Number(event.id) &&
-          Number(item.id_jenis_dokumentasi) === Number(field.id)
-        );
-        return {
-          id_jenis_dokumentasi: String(field.id),
-          aktif: isOn(existing?.aktif),
-          wajib: existing ? isOn(existing.wajib) : true,
-          urutan: existing ? Number(existing.urutan) : index,
-        };
-      });
-      return { id_event: String(event.id), aktif: isOn(assignment?.aktif), columns };
+      return { id_event: String(event.id), aktif: isOn(assignment?.aktif), columns: [] };
     }));
-  }, [selectedBranch, events, fields, assignments, fieldAssignments]);
+  }, [selectedBranch, events, assignments]);
 
   const selectedBranchInfo = branches.find((item) => String(item.kode_cabang) === selectedBranch);
   const visibleBranches = useMemo(() => {
@@ -87,16 +70,7 @@ export default function BranchEventConfigPage() {
   }, [branches, search]);
 
   function updateEvent(eventId: string, active: boolean) {
-    setConfigs((current) => current.map((item) => item.id_event === eventId
-      ? { ...item, aktif: active, columns: item.columns.map((col) => ({ ...col, aktif: active ? col.aktif : false })) }
-      : item));
-  }
-
-  function updateColumn(eventId: string, fieldId: string, changes: Partial<Config["columns"][number]>) {
-    setConfigs((current) => current.map((item) => item.id_event !== eventId ? item : {
-      ...item,
-      columns: item.columns.map((col) => col.id_jenis_dokumentasi === fieldId ? { ...col, ...changes } : col),
-    }));
+    setConfigs((current) => current.map((item) => item.id_event === eventId ? { ...item, aktif: active } : item));
   }
 
 
