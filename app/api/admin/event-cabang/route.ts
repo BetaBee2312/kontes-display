@@ -6,23 +6,25 @@ function clean(value: unknown) {
   return String(value ?? "").trim();
 }
 
-function errorResponse(error: unknown, message: string) {
+function missingTable(error: unknown) {
+  return !!error && typeof error === "object" && "code" in error &&
+    String((error as { code?: unknown }).code ?? "") === "ER_NO_SUCH_TABLE";
+}
+
+function databaseError(error: unknown, message: string) {
   console.error(message, error);
-  const code = error && typeof error === "object" && "code" in error
-    ? String((error as { code?: unknown }).code ?? "")
-    : "";
   return NextResponse.json({
     success: false,
-    message: code.startsWith("ER_NO_SUCH_TABLE")
-      ? "Tabel konfigurasi belum tersedia. Jalankan migration database terlebih dahulu."
+    message: missingTable(error)
+      ? "Tabel konfigurasi belum tersedia. Jalankan database migration terlebih dahulu."
       : message,
-  }, { status: 500 });
+  }, { status: missingTable(error) ? 503 : 500 });
 }
 
 export async function GET() {
   try {
     if (!(await getAdminUser())) return unauthorizedAdminResponse();
-    const [rows] = await db.query(
+    const [branches] = await db.query(
       `SELECT kode_cabang, nama_cabang, singkatan FROM tb_cabang ORDER BY nama_cabang ASC`,
     );
     const [events] = await db.query(
@@ -41,10 +43,10 @@ export async function GET() {
     );
     return NextResponse.json({
       success: true,
-      data: { cabang: rows, events, assignments, fields, fieldAssignments },
+      data: { cabang: branches, events, assignments, fields, fieldAssignments },
     });
   } catch (error) {
-    return errorResponse(error, "Gagal mengambil konfigurasi event cabang.");
+    return databaseError(error, "Gagal mengambil konfigurasi event cabang.");
   }
 }
 
@@ -67,7 +69,13 @@ export async function PUT(request: NextRequest) {
     }
     const eventIds = assignments.map((item) => Number(item.id_event));
     if (eventIds.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(eventIds).size !== eventIds.length) {
-      return NextResponse.json({ success: false, message: "Daftar event tidak valid atau ada event duplikat." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Daftar event tidak valid atau duplikat." }, { status: 400 });
+    }
+    for (const assignment of assignments) {
+      const ids = (Array.isArray(assignment.columns) ? assignment.columns : []).map((item) => Number(item.id_jenis_dokumentasi));
+      if (ids.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(ids).size !== ids.length) {
+        return NextResponse.json({ success: false, message: "Daftar kolom foto tidak valid atau duplikat." }, { status: 400 });
+      }
     }
 
     connection = await db.getConnection();
@@ -82,25 +90,21 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Cabang tidak ditemukan." }, { status: 404 });
     }
 
-    const [knownEvents] = await connection.query(
-      `SELECT id FROM tb_event`,
-    );
-    const knownEventIds = new Set((knownEvents as Array<{id:number|string}>).map((row) => Number(row.id)));
+    const [knownEvents] = await connection.query(`SELECT id FROM tb_event`);
+    const knownEventIds = new Set((knownEvents as Array<{ id: number | string }>).map((item) => Number(item.id)));
     if (eventIds.some((id) => !knownEventIds.has(id))) {
       await connection.rollback();
       return NextResponse.json({ success: false, message: "Terdapat event yang tidak terdaftar." }, { status: 400 });
     }
 
-    const everyFieldId = assignments.flatMap((a) => Array.isArray(a.columns) ? a.columns.map((c) => Number(c.id_jenis_dokumentasi)) : []);
-    if (everyFieldId.some((id) => !Number.isSafeInteger(id) || id <= 0)) {
-      await connection.rollback();
-      return NextResponse.json({ success: false, message: "Konfigurasi kolom foto tidak valid." }, { status: 400 });
-    }
+    const fieldIds = assignments.flatMap((assignment) =>
+      (Array.isArray(assignment.columns) ? assignment.columns : []).map((field) => Number(field.id_jenis_dokumentasi))
+    );
     const [knownFields] = await connection.query(`SELECT id FROM tb_jenis_dokumentasi WHERE aktif = 1`);
-    const knownFieldIds = new Set((knownFields as Array<{id:number|string}>).map((row) => Number(row.id)));
-    if (everyFieldId.some((id) => !knownFieldIds.has(id))) {
+    const knownFieldIds = new Set((knownFields as Array<{ id: number | string }>).map((item) => Number(item.id)));
+    if (fieldIds.some((id) => !knownFieldIds.has(id))) {
       await connection.rollback();
-      return NextResponse.json({ success: false, message: "Terdapat jenis dokumentasi yang tidak tersedia." }, { status: 400 });
+      return NextResponse.json({ success: false, message: "Terdapat jenis dokumentasi yang tidak aktif atau tidak dikenal." }, { status: 400 });
     }
 
     for (const assignment of assignments) {
@@ -112,30 +116,24 @@ export async function PUT(request: NextRequest) {
          ON DUPLICATE KEY UPDATE aktif = VALUES(aktif)`,
         [kodeCabang, idEvent, active ? 1 : 0],
       );
-
-      const columns = Array.isArray(assignment.columns) ? assignment.columns : [];
-
-      // Deactivate existing configured fields first; explicitly selected fields are reactivated below.
       await connection.execute(
-        `UPDATE tb_event_cabang_kolom SET aktif = 0
-         WHERE kode_cabang = ? AND id_event = ?`,
+        `UPDATE tb_event_cabang_kolom SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
         [kodeCabang, idEvent],
       );
 
-      for (const [index, column] of columns.entries()) {
-        const idJenis = Number(column.id_jenis_dokumentasi);
-        const columnActive = (column.aktif === true || Number(column.aktif) === 1) && active;
-        const wajib = column.wajib === true || Number(column.wajib) === 1;
-        const urutan = Number.isInteger(Number(column.urutan)) ? Number(column.urutan) : index;
+      const columns = Array.isArray(assignment.columns) ? assignment.columns : [];
+      for (const [index, field] of columns.entries()) {
+        const idJenis = Number(field.id_jenis_dokumentasi);
+        const columnActive = active && (field.aktif === true || Number(field.aktif) === 1);
+        const required = field.wajib === true || Number(field.wajib) === 1;
+        const order = Number.isInteger(Number(field.urutan)) ? Number(field.urutan) : index;
         await connection.execute(
           `INSERT INTO tb_event_cabang_kolom
             (kode_cabang, id_event, id_jenis_dokumentasi, urutan, wajib, aktif)
            VALUES (?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE
-             urutan = VALUES(urutan),
-             wajib = VALUES(wajib),
-             aktif = VALUES(aktif)`,
-          [kodeCabang, idEvent, idJenis, urutan, wajib ? 1 : 0, columnActive ? 1 : 0],
+             urutan = VALUES(urutan), wajib = VALUES(wajib), aktif = VALUES(aktif)`,
+          [kodeCabang, idEvent, idJenis, order, required ? 1 : 0, columnActive ? 1 : 0],
         );
       }
     }
@@ -144,7 +142,7 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: true, message: "Konfigurasi event dan kolom dokumentasi berhasil disimpan." });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => undefined);
-    return errorResponse(error, "Gagal menyimpan konfigurasi event cabang.");
+    return databaseError(error, "Gagal menyimpan konfigurasi event cabang.");
   } finally {
     connection?.release();
   }
