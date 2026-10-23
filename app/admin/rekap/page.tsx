@@ -457,7 +457,7 @@ export default function RekapAdminPage() {
         </div>
       </section>
 
-      <p className="text-xs leading-5 text-slate-400">Excel berisi sheet Ringkasan dan Detail Dokumentasi lengkap. Detail menyertakan ID, cabang, event, tanggal dokumentasi, waktu upload dari kolom timestamp yang tersedia, path foto, dan foto terkompres.</p>
+
     </div>
   );
 }
