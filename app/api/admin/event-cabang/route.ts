@@ -80,6 +80,47 @@ export async function POST(request: NextRequest) {
     return databaseError(error, "Gagal menambahkan jenis kolom foto.");
   }
 }
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!(await getAdminUser())) return unauthorizedAdminResponse();
+    const body = await request.json() as { id_jenis_dokumentasi?: unknown };
+    const id = Number(body.id_jenis_dokumentasi);
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      return NextResponse.json({ success: false, message: "ID jenis dokumentasi tidak valid." }, { status: 400 });
+    }
+
+    const [fieldRows] = await db.execute(
+      `SELECT id, nama_kolom, kode_kolom FROM tb_jenis_dokumentasi WHERE id = ? LIMIT 1`,
+      [id],
+    );
+    if (!Array.isArray(fieldRows) || fieldRows.length === 0) {
+      return NextResponse.json({ success: false, message: "Jenis dokumentasi tidak ditemukan." }, { status: 404 });
+    }
+
+    const [usageRows] = await db.execute(
+      `SELECT COUNT(*) AS total FROM tb_event_cabang_kolom WHERE id_jenis_dokumentasi = ?`,
+      [id],
+    );
+    const usageCount = Number((usageRows as Array<{ total: number | string }>)[0]?.total ?? 0);
+    if (usageCount > 0) {
+      return NextResponse.json({
+        success: false,
+        code: "FIELD_IN_USE",
+        message: `Kolom masih terkait dengan ${usageCount} konfigurasi cabang/event. Nonaktifkan atau lepaskan kolom itu dari konfigurasi terlebih dahulu, lalu coba lagi.`,
+      }, { status: 409 });
+    }
+
+    await db.execute(`DELETE FROM tb_jenis_dokumentasi WHERE id = ?`, [id]);
+    return NextResponse.json({ success: true, message: "Jenis dokumentasi berhasil dihapus." });
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+    if (code === "ER_ROW_IS_REFERENCED_2") {
+      return NextResponse.json({ success: false, message: "Kolom masih digunakan oleh konfigurasi cabang/event dan tidak dapat dihapus." }, { status: 409 });
+    }
+    return databaseError(error, "Gagal menghapus jenis kolom foto.");
+  }
+}
+
 export async function PUT(request: NextRequest) {
   let connection: Awaited<ReturnType<typeof db.getConnection>> | undefined;
   try {
