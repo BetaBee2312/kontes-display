@@ -1219,31 +1219,9 @@ export default function FormPage() {
 
 
 
-  const exactEvent =
-
-    events.some(
-
-      (event) =>
-
-        event.nama_event
-
-          .toLowerCase()
-
-          .trim() ===
-
-        eventSearch
-
-          .toLowerCase()
-
-          .trim()
-
-    );
-
-
-
-  const showCreate = false;
-
-
+  const filteredEvents = events.filter((event) =>
+    event.nama_event.toLowerCase().includes(eventSearch.toLowerCase().trim())
+  );
 
   /*
 
