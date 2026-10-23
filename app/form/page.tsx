@@ -250,7 +250,7 @@ export default function FormPage() {
             setEvents([]);
             return;
           }
-          setError(result.message || "Gagal mengambil daftar event.");
+          void Swal.fire({ icon: "error", title: "Gagal memuat event", text: result.message || "Gagal mengambil daftar event." });
           return;
         }
 
@@ -550,7 +550,7 @@ export default function FormPage() {
         if (response.status === 404 && result.code === "BRANCH_NOT_FOUND") {
           showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
         } else {
-          setError(result.message || "Gagal memeriksa cabang.");
+          void Swal.fire({ icon: "error", title: "Gagal memeriksa cabang", text: result.message || "Gagal memeriksa cabang." });
         }
         return;
       }
@@ -674,7 +674,7 @@ export default function FormPage() {
     setError("");
     setMessage("");
     if (!selectedFieldCode) {
-      setError("Pilih jenis dokumentasi terlebih dahulu.");
+      void Swal.fire({ icon: "warning", title: "Pilih jenis dokumentasi", text: "Pilih jenis dokumentasi terlebih dahulu." });
       e.target.value = "";
       return;
     }
@@ -838,15 +838,15 @@ export default function FormPage() {
     setMessage("");
 
     if (!cabang) {
-      setError("Cabang belum dipilih.");
+      void Swal.fire({ icon: "warning", title: "Cabang belum dipilih", text: "Periksa kode cabang terlebih dahulu." });
       return;
     }
     if (!selectedEvent) {
-      setError("Pilih event yang tersedia untuk cabang ini.");
+      void Swal.fire({ icon: "warning", title: "Pilih event", text: "Pilih event yang tersedia untuk cabang ini." });
       return;
     }
     if (!tanggal) {
-      setError("Tanggal wajib diisi.");
+      void Swal.fire({ icon: "warning", title: "Tanggal wajib diisi", text: "Pilih tanggal dokumentasi terlebih dahulu." });
       return;
     }
 
@@ -854,7 +854,7 @@ export default function FormPage() {
       field.wajib && !(fieldPhotos[field.kode_kolom] || []).length
     );
     if (missingRequired) {
-      setError(`Foto ${missingRequired.nama_kolom} wajib diupload.`);
+      void Swal.fire({ icon: "warning", title: "Foto wajib diupload", text: `Foto ${missingRequired.nama_kolom} wajib diupload.` });
       return;
     }
 
@@ -862,12 +862,12 @@ export default function FormPage() {
       (fieldPhotos[field.kode_kolom] || []).map((foto) => ({ foto, field }))
     );
     if (uploadQueue.length === 0) {
-      setError("Pilih minimal satu foto pada kolom dokumentasi yang tersedia.");
+      void Swal.fire({ icon: "warning", title: "Belum ada foto", text: "Pilih minimal satu foto pada kolom dokumentasi yang tersedia." });
       return;
     }
     const tooLarge = uploadQueue.find((item) => item.foto.size > 2 * 1024 * 1024);
     if (tooLarge) {
-      setError(`Foto "${tooLarge.foto.name}" melebihi 2 MB.`);
+      void Swal.fire({ icon: "warning", title: "Ukuran foto terlalu besar", text: `Foto "${tooLarge.foto.name}" melebihi 2 MB.` });
       return;
     }
 
