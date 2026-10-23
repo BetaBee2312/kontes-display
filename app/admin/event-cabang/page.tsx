@@ -249,7 +249,7 @@ export default function BranchEventConfigPage() {
             {activeEventGroups.length === 0 ? (
               <div className="p-8 text-center">
                 <p className="font-medium text-slate-700">Belum ada cabang yang memiliki event aktif</p>
-                <p className="mt-1 text-sm text-slate-500">Aktifkan event di atas lalu simpan konfigurasi untuk melihat rekapnya di sini.</p>
+                
               </div>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -283,7 +283,7 @@ export default function BranchEventConfigPage() {
           {selectedBranchInfos.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
               <h2 className="font-semibold text-slate-800">Belum ada cabang dipilih</h2>
-              <p className="mt-1 text-sm text-slate-500">Pilih satu atau beberapa cabang di dropdown untuk mengatur akses event.</p>
+              
             </div>
           ) : (
             <>
