@@ -932,7 +932,7 @@ if (!cabang) {
 
           <p className="text-sm font-semibold tracking-wide text-blue-600">
 
-            DOCUMENTATION SYSTEM
+            MARKETING DOCUMENTATION
 
           </p>
 
@@ -940,7 +940,7 @@ if (!cabang) {
 
           <h1 className="mt-2 text-3xl font-bold text-slate-900">
 
-            Upload Dokumentasi
+            UPLOAD DOCUMENTATION BY MARKETING
 
           </h1>
 
