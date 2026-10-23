@@ -197,7 +197,7 @@ export default function BranchEventConfigPage() {
 
       {loading ? <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">Memuat data cabang dan event...</div> : (
         <div className="space-y-4">
-          <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+          <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5">
             <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
               <div className="min-w-0 flex-1">
                 <label htmlFor="branch-multiselect" className="mb-1.5 block text-sm font-semibold text-slate-800">Pilih Cabang</label>
@@ -238,7 +238,7 @@ export default function BranchEventConfigPage() {
             </div>
           </section>
 
-          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <div>
                 <h2 className="font-semibold text-slate-900">Cabang dengan Event Aktif</h2>
