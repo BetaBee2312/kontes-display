@@ -36,3 +36,7 @@ CREATE TABLE IF NOT EXISTS tb_event_cabang_kolom (
 
 INSERT IGNORE INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif)
 VALUES ('voucher','Voucher',1),('hangmob','Hangmob',1),('display','Display',1),('foto','Foto Dokumentasi',1);
+
+-- Run once for each existing numbered branch table that predates this feature:
+-- ALTER TABLE tb_23212 ADD COLUMN kode_kolom VARCHAR(50) NOT NULL DEFAULT 'foto';
+-- The ensureCabangTable helper adds the column lazily for a branch on its next upload.
