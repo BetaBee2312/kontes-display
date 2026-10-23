@@ -864,328 +864,92 @@ export default function FormPage() {
 
    */
 
-  async function handleSubmit(
-
-    e: React.FormEvent<HTMLFormElement>
-
-  ) {
-
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-
-
     setError("");
-
     setMessage("");
 
-
-
-    /*
-
-     * Validasi cabang
-
-     */
-
     if (!cabang) {
-
-      setError(
-
-        "Cabang belum dipilih."
-
-      );
-
-
-
+      setError("Cabang belum dipilih.");
       return;
-
     }
-
-
-
-    /*
-
-     * Validasi event
-
-     */
-
     if (!selectedEvent) {
-
-      setError(
-
-        "Pilih atau tambahkan event terlebih dahulu."
-
-      );
-
-
-
+      setError("Pilih event yang tersedia untuk cabang ini.");
       return;
-
     }
-
-
-
-    /*
-
-     * Validasi tanggal
-
-     */
-
     if (!tanggal) {
-
-      setError(
-
-        "Tanggal wajib diisi."
-
-      );
-
-
-
+      setError("Tanggal wajib diisi.");
       return;
-
     }
 
+    const missingRequired = selectedEvent.columns.find((field) =>
+      field.wajib && !(fieldPhotos[field.kode_kolom] || []).length
+    );
+    if (missingRequired) {
+      setError(`Foto ${missingRequired.nama_kolom} wajib diupload.`);
+      return;
+    }
 
-
-    /*
-
-     * Minimal satu foto wajib dipilih.
-
-     */
-
-    if (!selectedEvent.columns.some((field) => (fieldPhotos[field.kode_kolom] || []).length > 0)) {
+    const uploadQueue = selectedEvent.columns.flatMap((field) =>
+      (fieldPhotos[field.kode_kolom] || []).map((foto) => ({ foto, field }))
+    );
+    if (uploadQueue.length === 0) {
       setError("Pilih minimal satu foto pada kolom dokumentasi yang tersedia.");
       return;
     }
-
-
-
-    const fotoTerlaluBesar = fotos.find(
-
-      (file) => file.size > 2 * 1024 * 1024
-
-    );
-
-    if (fotoTerlaluBesar) {
-
-      setError(`Ukuran foto "${fotoTerlaluBesar.name}" melebihi 2 MB.`);
-
+    const tooLarge = uploadQueue.find((item) => item.foto.size > 2 * 1024 * 1024);
+    if (tooLarge) {
+      setError(`Foto "${tooLarge.foto.name}" melebihi 2 MB.`);
       return;
-
     }
 
-
-
     setLoadingSubmit(true);
-
-
-
     try {
-
       const savedIds: Array<string | number> = [];
-
-      const uploadQueue = selectedEvent.columns.flatMap((field) =>
-        (fieldPhotos[field.kode_kolom] || []).map((foto) => ({ foto, field }))
-      );
-
-      // Upload one file at a time to retain compatibility with existing endpoint semantics.
       for (let index = 0; index < uploadQueue.length; index++) {
         const { foto, field } = uploadQueue[index];
-
         const formData = new FormData();
-
         formData.append("kode_cabang", String(cabang.kode_cabang));
-
         formData.append("kode_event", selectedEvent.kode_event);
-
         formData.append("kode_kolom", field.kode_kolom);
-
         formData.append("tanggal", tanggal);
-
         formData.append("foto", foto);
 
-
-
-        console.log("Mengirim dokumentasi:", {
-
-          kode_cabang: String(cabang.kode_cabang),
-
-          kode_event: selectedEvent.kode_event,
-
-          nama_event: selectedEvent.nama_event,
-          kode_kolom: field.kode_kolom,
-
-          tanggal,
-
-          foto: foto.name,
-
-          ukuran: `${(foto.size / 1024 / 1024).toFixed(2)} MB`,
-
-          urutan: `${index + 1}/${fotos.length}`,
-
-        });
-
-
-
-        const response = await fetch("/api/dokumentasi", {
-
-          method: "POST",
-
-          body: formData,
-
-        });
-
-
-
+        const response = await fetch("/api/dokumentasi", { method: "POST", body: formData });
         const rawText = await response.text();
-
         let result: any;
-
         try {
-
           result = JSON.parse(rawText);
-
         } catch {
-
-          throw new Error(
-
-            `Foto ${index + 1}: server mengembalikan response bukan JSON (HTTP ${response.status}). ${savedIds.length} foto sebelumnya berhasil disimpan.`
-
-          );
-
+          throw new Error(`Foto ${index + 1}: respons server tidak valid (HTTP ${response.status}). ${savedIds.length} foto sebelumnya berhasil disimpan.`);
         }
-
-
-
         if (!response.ok || !result.success) {
-
-          throw new Error(
-
-            `Foto ${index + 1}: ${result.message || `Gagal menyimpan (HTTP ${response.status})`}. ${savedIds.length} foto sebelumnya berhasil disimpan.`
-
-          );
-
+          throw new Error(`Foto ${index + 1}: ${result.message || `Gagal menyimpan (HTTP ${response.status})`}. ${savedIds.length} foto sebelumnya berhasil disimpan.`);
         }
-
-
-
-        if (result.data?.id !== undefined) {
-
-          savedIds.push(result.data.id);
-
-        }
-
+        if (result.data?.id !== undefined) savedIds.push(result.data.id);
       }
 
-
-
-      setMessage(
-
-        `Berhasil menyimpan ${uploadQueue.length} foto dokumentasi${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`
-
-      );
-
-
-
-      /*
-
-       * Reset hanya data dokumentasi.
-
-       *
-
-       * Cabang tetap dipertahankan supaya user
-
-       * bisa upload dokumentasi berikutnya
-
-       * untuk cabang yang sama.
-
-       */
-
+      setMessage(`Berhasil menyimpan ${uploadQueue.length} foto dokumentasi${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`);
       Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
       setFotos([]);
       setFieldPhotos({});
       setFieldPreviews({});
-      setSelectedFieldCode(selectedEvent.columns[0]?.kode_kolom || "");
-
-
-
       setTanggal("");
-
-
-
       setSelectedEvent(null);
-
-
-
+      setSelectedFieldCode("");
       setEventSearch("");
-
-
-
       setEventOpen(false);
-
-
-
-      /*
-
-       * Reset input file
-
-       */
-
-      const fileInput =
-
-        document.getElementById(
-
-          "foto-kamera"
-
-        ) as HTMLInputElement | null;
-
-
-
-      if (fileInput) {
-
-        fileInput.value = "";
-
-      }
-
-
-      const galleryInput = document.getElementById(
-
-        "foto-galeri"
-
-      ) as HTMLInputElement | null;
-
+      const cameraInput = document.getElementById("foto-kamera") as HTMLInputElement | null;
+      if (cameraInput) cameraInput.value = "";
+      const galleryInput = document.getElementById("foto-galeri") as HTMLInputElement | null;
       if (galleryInput) galleryInput.value = "";
-
     } catch (error) {
-
-      console.error(
-
-        "UPLOAD ERROR:",
-
-        error
-
-      );
-
-
-
-      setError(
-
-        error instanceof Error
-
-          ? error.message
-
-          : "Terjadi kesalahan saat mengirim data."
-
-      );
-
+      console.error("UPLOAD ERROR:", error);
+      setError(error instanceof Error ? error.message : "Terjadi kesalahan saat mengirim data.");
     } finally {
-
       setLoadingSubmit(false);
-
     }
-
   }
-
-
 
   /*
 
