@@ -246,7 +246,7 @@ export default function RekapAdminPage() {
     : Array.from({ length: 8 }, (_, index) => currentYear - index);
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-3 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Laporan</p>
@@ -344,7 +344,7 @@ export default function RekapAdminPage() {
           </div>
           <span className="text-xs text-slate-500">Menampilkan {numberFormat.format(detailsShown)} dari {numberFormat.format(stats.total_dokumentasi)} data yang cocok</span>
         </div>
-        <div className="overflow-x-auto">
+        <div className="min-w-0 overflow-x-auto">
           <table className="w-full min-w-[1000px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
