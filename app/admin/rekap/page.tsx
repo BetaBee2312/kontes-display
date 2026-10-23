@@ -338,7 +338,7 @@ export default function RekapAdminPage() {
         <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
             <h2 className="font-semibold text-slate-900">Data dokumentasi yang dikirim cabang</h2>
-            <p className="mt-1 text-xs text-slate-500">Tampilan kartu di mobile, tabel lengkap di layar besar.</p>
+
           </div>
           <span className="text-xs text-slate-500">Menampilkan {numberFormat.format(detailsShown)} dari {numberFormat.format(stats.total_dokumentasi)} data yang cocok</span>
         </div>
@@ -401,7 +401,7 @@ export default function RekapAdminPage() {
         <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
             <h2 className="font-semibold text-slate-900">Ringkasan — {modes.find((item) => item.value === mode)?.label || "Rekap"}</h2>
-            <p className="mt-1 text-sm text-slate-500">{numberFormat.format(rows.length)} baris ringkasan{lastLoaded ? ` · diperbarui ${lastLoaded}` : ""}</p>
+
           </div>
           <span className="text-xs text-slate-400">Tampilan kartu di mobile</span>
         </div>
@@ -411,7 +411,7 @@ export default function RekapAdminPage() {
           ) : rows.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 px-4 py-9 text-center">
               <p className="font-medium text-slate-700">Belum ada data untuk filter ini</p>
-              <p className="mt-1 text-sm text-slate-500">Ubah filter atau periksa apakah dokumentasi sudah masuk ke database.</p>
+    
             </div>
           ) : rows.map((row, index) => {
             const title = mode === "month" ? formatMonth(row.bulan || "") : mode === "day" ? formatDate(row.tanggal || "") : mode === "event" ? (row.nama_event || "Event tanpa nama") : (row.nama_cabang || "Cabang tanpa nama");
