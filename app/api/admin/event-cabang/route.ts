@@ -214,7 +214,7 @@ export async function PUT(request: NextRequest) {
     }));
     const branchCodes = targets.map((target) => target.kode_cabang);
 
-    if (branchCodes.some((code) => !/^\\d+$/.test(code)) || new Set(branchCodes).size !== branchCodes.length) {
+    if (branchCodes.some((code) => !/^\d+$/.test(code)) || new Set(branchCodes).size !== branchCodes.length) {
       return NextResponse.json({ success: false, message: "Kode cabang tidak valid atau ada cabang yang duplikat." }, { status: 400 });
     }
 
