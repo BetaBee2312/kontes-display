@@ -201,7 +201,7 @@ export default function BranchEventConfigPage() {
             <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
               <div className="min-w-0 flex-1">
                 <label htmlFor="branch-multiselect" className="mb-1.5 block text-sm font-semibold text-slate-800">Pilih Cabang</label>
-                <p className="mb-2 text-xs text-slate-500">{branches.length} cabang terdaftar. Cari berdasarkan kode, nama, atau singkatan.</p>
+
                 <Select
                   inputId="branch-multiselect"
                   isMulti
@@ -242,7 +242,7 @@ export default function BranchEventConfigPage() {
             <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <div>
                 <h2 className="font-semibold text-slate-900">Cabang dengan Event Aktif</h2>
-                <p className="mt-1 text-sm text-slate-500">Daftar hak akses event saat ini, dikelompokkan berdasarkan event yang berjalan di masing-masing cabang.</p>
+
               </div>
               <span className="text-xs font-medium text-slate-500">{activeEventGroups.length} event aktif</span>
             </div>
