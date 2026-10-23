@@ -113,11 +113,6 @@ export async function PUT(request: NextRequest) {
         [kodeCabang, idEvent, active ? 1 : 0],
       );
 
-      const [rows] = await connection.execute(
-        `SELECT id FROM tb_event_cabang WHERE kode_cabang = ? AND id_event = ? LIMIT 1`,
-        [kodeCabang, idEvent],
-      );
-      const eventAllowed = Array.isArray(rows) && rows.length > 0;
       const columns = Array.isArray(assignment.columns) ? assignment.columns : [];
 
       // Deactivate existing configured fields first; explicitly selected fields are reactivated below.
