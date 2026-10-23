@@ -1,7 +1,3 @@
--- Dynamic branch/event/photo-column configuration for Kontes Display.
--- Run once on the same MySQL database used by the application.
--- Existing per-branch documentation tables are intentionally preserved.
-
 CREATE TABLE IF NOT EXISTS tb_event_cabang (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   kode_cabang VARCHAR(30) NOT NULL,
@@ -37,10 +33,5 @@ CREATE TABLE IF NOT EXISTS tb_event_cabang_kolom (
   KEY idx_event_cabang_kolom_jenis (id_jenis_dokumentasi)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Seed common fields. These are suggestions, not assignments to any branch.
 INSERT IGNORE INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif)
-VALUES
-  ('voucher', 'Voucher', 1),
-  ('hangmob', 'Hangmob', 1),
-  ('display', 'Display', 1),
-  ('foto', 'Foto Dokumentasi', 1);
+VALUES ('voucher','Voucher',1),('hangmob','Hangmob',1),('display','Display',1),('foto','Foto Dokumentasi',1);
