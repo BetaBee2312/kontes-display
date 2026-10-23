@@ -113,7 +113,7 @@ export default function BranchEventConfigPage() {
 
   function makeFieldCode(value: string) {
     return value.toLowerCase().trim().normalize("NFKD")
-      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "")
       .slice(0, 50);
