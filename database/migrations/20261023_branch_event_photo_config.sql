@@ -1,3 +1,5 @@
+-- Run once after backing up the database, before deploying this branch.
+-- Keeps the legacy per-branch tables and adds safe photo-field metadata.
 CREATE TABLE IF NOT EXISTS tb_event_cabang (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
   kode_cabang VARCHAR(30) NOT NULL,
@@ -35,3 +37,7 @@ CREATE TABLE IF NOT EXISTS tb_event_cabang_kolom (
 
 INSERT IGNORE INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif)
 VALUES ('voucher','Voucher',1),('hangmob','Hangmob',1),('display','Display',1),('foto','Foto Dokumentasi',1);
+
+-- Before deploying, add the metadata column to existing tb_<kode_cabang> tables:
+-- ALTER TABLE tb_23212 ADD COLUMN kode_kolom VARCHAR(50) NOT NULL DEFAULT 'foto';
+-- Repeat for existing numbered branch tables, or let ensureCabangTable add it on first upload.
