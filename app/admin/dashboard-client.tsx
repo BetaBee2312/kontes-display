@@ -273,7 +273,7 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"><p className="font-semibold">Data insight gagal dimuat</p><p className="mt-1">{error}</p><p className="mt-1 text-xs text-rose-700">Periksa koneksi database, struktur tabel dokumentasi, dan log terminal Next.js.</p></div>}
+      
 
       <section aria-label="Ringkasan statistik" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard title="Total Cabang" value={data?.overview.totalCabang ?? null} description="Jumlah cabang yang tercatat di master data." tone="blue" icon="branch" />
