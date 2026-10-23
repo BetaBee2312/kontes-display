@@ -107,7 +107,7 @@ export default function EventAdminPage() {
   }, [loadEvents]);
   function makeFieldCode(value: string) {
     return value.toLowerCase().trim().normalize("NFKD")
-      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "")
       .slice(0, 50);
@@ -118,30 +118,6 @@ export default function EventAdminPage() {
     field.kode_kolom.toLowerCase() === draftFieldCode ||
     field.nama_kolom.trim().toLowerCase() === newFieldName.trim().toLowerCase()
   );
-
-  async function refreshPhotoConfig() {
-    const response = await fetch("/api/admin/event-cabang", { cache: "no-store" });
-    const result = await readResponse(response);
-    if (!response.ok || !result.success) throw new Error(result.message || "Gagal memuat kolom dokumentasi.");
-    const fields = (result.data.fields || []) as PhotoField[];
-    const mappings = (result.data.eventFields || []) as Array<{
-      id_event: number | string; id_jenis_dokumentasi: number | string; aktif: number | boolean; wajib: number | boolean; urutan: number;
-    }>;
-    setPhotoFields(fields);
-    const map: Record<string, EventPhotoField[]> = {};
-    for (const event of eventList) {
-      map[String(event.id)] = fields.map((field, index) => {
-        const existing = mappings.find((item) => Number(item.id_event) === Number(event.id) && Number(item.id_jenis_dokumentasi) === Number(field.id));
-        return {
-          id_jenis_dokumentasi: String(field.id),
-          aktif: existing ? Number(existing.aktif) === 1 || existing.aktif === true : false,
-          wajib: existing ? Number(existing.wajib) === 1 || existing.wajib === true : true,
-          urutan: existing ? Number(existing.urutan) : index,
-        };
-      });
-    }
-    setEventFields(map);
-  }
 
   async function createPhotoField(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -465,7 +441,7 @@ export default function EventAdminPage() {
           </div>
         </div>
         {photoFields.length === 0 ? (
-          <div className="p-6 text-sm text-slate-500">Belum ada master jenis dokumentasi. Tambahkan Hangmob, Voucher, Floor Display, dan lainnya dari menu Konfigurasi Event Cabang.</div>
+          <div className="p-6 text-sm text-slate-500">Belum ada jenis dokumentasi. Tambahkan Hangmob, Voucher, Floor Display, dan lainnya pada bagian Master Jenis Dokumentasi di atas.</div>
         ) : eventList.length === 0 ? (
           <div className="p-6 text-sm text-slate-500">Buat event terlebih dahulu, lalu tentukan kolom fotonya di sini.</div>
         ) : (
