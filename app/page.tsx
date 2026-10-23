@@ -47,9 +47,6 @@ export default function Home() {
                 Upload Dokumentasi
               </h2>
 
-              <p className="mt-3 text-slate-500">
-                Masukkan kode site cabang dan upload foto dokumentasi.
-              </p>
 
               <div className="mt-6 font-medium text-blue-600 transition group-hover:translate-x-1">
                 Mulai Upload →
