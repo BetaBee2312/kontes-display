@@ -350,7 +350,7 @@ export default function EventAdminPage() {
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div>
             <h2 className="font-semibold text-slate-900">Daftar Event</h2>
-            <p className="mt-1 text-sm text-slate-500">Cari berdasarkan nama atau kode event.</p>
+
           </div>
           <div className="relative w-full sm:max-w-xs">
             <svg aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
