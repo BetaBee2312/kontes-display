@@ -648,104 +648,10 @@ export default function FormPage() {
 
    */
 
-  function handleCreateEvent(
-
-    namaEvent: string
-
-  ) {
-
-    const nama =
-
-      namaEvent.trim();
-
-
-
-    if (!nama) {
-
-      return;
-
-    }
-
-
-
-    const kodeEvent =
-
-      nama
-
-        .toLowerCase()
-
-        .trim()
-
-        .replace(
-
-          /[^a-z0-9]+/g,
-
-          "_"
-
-        )
-
-        .replace(
-
-          /^_+|_+$/g,
-
-          ""
-
-        );
-
-
-
-    if (!kodeEvent) {
-
-      setError(
-
-        "Nama event tidak menghasilkan kode yang valid."
-
-      );
-
-
-
-      return;
-
-    }
-
-
-
-    const customEvent: EventOption = {
-      id: `custom-${Date.now()}`,
-      nama_event: nama,
-      kode_event: kodeEvent,
-      columns: [],
-    };
-
-
-
-    setSelectedEvent(
-
-      customEvent
-
-    );
-
-
-
-    setEventSearch("");
-
-    setEventOpen(false);
-
-
-
-    setError("");
-
-
-
-    setMessage(
-
-      `Event "${nama}" digunakan untuk dokumentasi ini.`
-
-    );
-
+  function handleCreateEvent(_namaEvent: string) {
+    // Branches may only submit an event granted by the administrator.
+    setError("Event hanya dapat dipilih dari daftar yang diberikan administrator.");
   }
-
-
 
   /*
 
