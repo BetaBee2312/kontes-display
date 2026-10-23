@@ -594,7 +594,7 @@ export default function CabangAdminPage() {
 
             <h2 className="font-semibold text-slate-900">Daftar Cabang</h2>
 
-            <p className="mt-1 text-sm text-slate-500">Cari berdasarkan kode, nama, singkatan, DC Support, atau cluster.</p>
+
 
           </div>
 
