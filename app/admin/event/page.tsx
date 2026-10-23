@@ -455,7 +455,7 @@ export default function EventAdminPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-slate-900">{field.nama_kolom}</p>
                     <p className="mt-1 truncate font-mono text-xs text-slate-500">{field.kode_kolom}</p>
-                    <p className="mt-1 text-[11px] text-slate-400">{usageCount ? `Aktif di ${usageCount} event` : "Belum dipakai event"}</p>
+                    
                   </div>
                   <button type="button" onClick={() => void deletePhotoField(field)} disabled={fieldBusy || usageCount > 0} title={usageCount ? "Lepaskan dari event terlebih dahulu" : "Hapus jenis dokumentasi"} className="rounded-lg border border-red-200 px-2.5 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30">Hapus</button>
                 </div>
