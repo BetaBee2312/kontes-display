@@ -30,9 +30,7 @@ export default function RiwayatPage(
     <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-6xl">
         <Suspense fallback={<RiwayatLoading />}>
-          <RiwayatContent
-            params={props.params}
-          />
+          <RiwayatContent params={props.params} />
         </Suspense>
       </div>
     </main>
@@ -52,9 +50,7 @@ function RiwayatLoading() {
 
       <div className="mt-6">
         <div className="h-4 w-44 animate-pulse rounded bg-slate-200" />
-
         <div className="mt-3 h-9 w-72 animate-pulse rounded bg-slate-200" />
-
         <div className="mt-3 h-4 w-48 animate-pulse rounded bg-slate-200" />
       </div>
 
@@ -65,7 +61,6 @@ function RiwayatLoading() {
             className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
           >
             <div className="aspect-video animate-pulse bg-slate-200" />
-
             <div className="space-y-3 p-5">
               <div className="h-3 w-20 animate-pulse rounded bg-slate-200" />
               <div className="h-5 w-32 animate-pulse rounded bg-slate-200" />
@@ -86,34 +81,21 @@ async function RiwayatContent({
   }>;
 }) {
   const resolvedParams = await params;
+  const kodeCabang = String(resolvedParams.kode).trim();
 
-  const kodeCabang = String(
-    resolvedParams.kode
-  ).trim();
+  const [cabangRows] = await db.execute(
+    `
+      SELECT
+        kode_cabang,
+        nama_cabang
+      FROM tb_cabang
+      WHERE kode_cabang = ?
+      LIMIT 1
+    `,
+    [kodeCabang]
+  );
 
-  /*
-   * ==========================================
-   * CARI CABANG
-   * ==========================================
-   */
-
-  const [cabangRows] =
-    await db.execute(
-      `
-        SELECT
-          kode_cabang,
-          nama_cabang
-        FROM tb_cabang
-        WHERE kode_cabang = ?
-        LIMIT 1
-      `,
-      [kodeCabang]
-    );
-
-  if (
-    !Array.isArray(cabangRows) ||
-    cabangRows.length === 0
-  ) {
+  if (!Array.isArray(cabangRows) || cabangRows.length === 0) {
     return (
       <div>
         <Link
@@ -121,65 +103,32 @@ async function RiwayatContent({
           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>
-        Kembali ke Form
+          Kembali ke Form
         </Link>
 
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-          Cabang dengan kode{" "}
-          <strong>{kodeCabang}</strong>{" "}
-          tidak ditemukan.
+          Cabang dengan kode <strong>{kodeCabang}</strong> tidak ditemukan.
         </div>
       </div>
     );
   }
 
-  const cabang =
-    cabangRows[0] as Cabang;
+  const cabang = cabangRows[0] as Cabang;
+  const kode = String(cabang.kode_cabang).trim();
+  const tableName = getCabangTableName(kode);
 
-  const kode = String(
-    cabang.kode_cabang
-  ).trim();
+  const [tableRows] = await db.execute(
+    `
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+      LIMIT 1
+    `,
+    [tableName]
+  );
 
-  /*
-   * ==========================================
-   * TABLE CABANG
-   * ==========================================
-   *
-   * 23212 -> tb_23212
-   */
-
-  const tableName =
-    getCabangTableName(kode);
-
-  /*
-   * ==========================================
-   * CEK TABLE
-   * ==========================================
-   */
-
-  const [tableRows] =
-    await db.execute(
-      `
-        SELECT
-          TABLE_NAME
-        FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_SCHEMA = DATABASE()
-          AND TABLE_NAME = ?
-        LIMIT 1
-      `,
-      [tableName]
-    );
-
-  /*
-   * ==========================================
-   * BELUM ADA TABLE
-   * ==========================================
-   */
-
-  if (
-    !Array.isArray(tableRows) ||
-    tableRows.length === 0
-  ) {
+  if (!Array.isArray(tableRows) || tableRows.length === 0) {
     return (
       <div>
         <Link
@@ -187,7 +136,7 @@ async function RiwayatContent({
           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>
-        Kembali ke Form
+          Kembali ke Form
         </Link>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
@@ -198,7 +147,6 @@ async function RiwayatContent({
           <h1 className="mt-5 text-2xl font-bold text-slate-900">
             Belum Ada Riwayat
           </h1>
-
 
           <Link
             href="/form"
@@ -211,30 +159,30 @@ async function RiwayatContent({
     );
   }
 
-  /*
-   * ==========================================
-   * AMBIL DATA
-   * ==========================================
-   */
-
   const [columnRows] = await db.execute(
     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
-    "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'kode_kolom' LIMIT 1",
+      "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'kode_kolom' LIMIT 1",
     [tableName],
   );
+
   const hasCategoryCode = Array.isArray(columnRows) && columnRows.length > 0;
   const categorySelect = hasCategoryCode
     ? "COALESCE(NULLIF(TRIM(jd.nama_kolom), ''), NULLIF(TRIM(t.kode_kolom), ''), 'Dokumentasi') AS kategori"
     : "'Dokumentasi' AS kategori";
+
+  // Normalize both sides to the same charset and collation before comparing.
+  // Branch tables may be created using a different default collation than master tables.
   const categoryJoin = hasCategoryCode
-    ? "LEFT JOIN tb_jenis_dokumentasi jd ON jd.kode_kolom = t.kode_kolom"
+    ? "LEFT JOIN tb_jenis_dokumentasi jd ON " +
+      "CONVERT(jd.kode_kolom USING utf8mb4) COLLATE utf8mb4_unicode_ci = " +
+      "CONVERT(t.kode_kolom USING utf8mb4) COLLATE utf8mb4_unicode_ci"
     : "";
 
   const [rows] = await db.query<Riwayat[]>(
     "SELECT t.event, " + categorySelect + ", " +
-    "DATE_FORMAT(t.tanggal, '%d/%m/%Y') AS tanggal, SHA2(t.foto, 256) AS foto_ref " +
-    "FROM `" + tableName + "` t " + categoryJoin + " " +
-    "ORDER BY t.tanggal DESC, t.created_at DESC",
+      "DATE_FORMAT(t.tanggal, '%d/%m/%Y') AS tanggal, SHA2(t.foto, 256) AS foto_ref " +
+      "FROM `" + tableName + "` t " + categoryJoin + " " +
+      "ORDER BY t.tanggal DESC, t.created_at DESC",
   );
 
   return (
@@ -260,9 +208,7 @@ async function RiwayatContent({
 
             <p className="mt-2 text-sm text-slate-500">
               Kode Site:{" "}
-              <span className="font-semibold text-slate-700">
-                {kode}
-              </span>
+              <span className="font-semibold text-slate-700">{kode}</span>
             </p>
           </div>
         </div>
@@ -270,10 +216,7 @@ async function RiwayatContent({
 
       <div className="mt-6 border-t border-slate-200" />
 
-      <RiwayatClient
-        initialRows={rows}
-        kodeCabang={kode}
-      />
+      <RiwayatClient initialRows={rows} kodeCabang={kode} />
     </div>
   );
 }
