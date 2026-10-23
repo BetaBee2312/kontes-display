@@ -928,21 +928,21 @@ if (!cabang) {
 
         ================================================= */}
 
-        <div className="mb-6 sm:mb-8">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 sm:text-sm">
+        <div className="mb-5 sm:mb-7">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600 sm:text-sm">
             Marketing Documentation
           </p>
 
-          <h1 className="mt-3 max-w-lg text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 sm:text-4xl">
-            Upload Documentation
+          <h1 className="mt-3 text-[1.8rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-4xl">
+            Upload Dokumentasi
             <span className="mt-1 block text-blue-600">by Marketing</span>
           </h1>
 
-          <div className="mt-5 flex justify-center rounded-2xl bg-white/70 px-4 py-3 sm:mt-6">
+          <div className="mt-4 flex justify-center">
             <img
               src="/logo/logoyomart.png"
               alt="Yomart"
-              className="h-auto w-full max-w-[250px] object-contain sm:max-w-[280px]"
+              className="h-auto w-full max-w-[230px] object-contain sm:max-w-[260px]"
             />
           </div>
         </div>
@@ -971,7 +971,7 @@ if (!cabang) {
 
           onSubmit={handleSubmit}
 
-          className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg"
+          className="space-y-5 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)] sm:space-y-6 sm:p-6"
 
         >
 
