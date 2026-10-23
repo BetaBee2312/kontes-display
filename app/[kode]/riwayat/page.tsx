@@ -13,11 +13,10 @@ type Cabang = {
 };
 
 interface Riwayat extends RowDataPacket {
-  id: string;
   event: string;
   kategori: string;
   tanggal: string;
-  foto: string;
+  foto_ref: string;
 }
 
 export default function RiwayatPage(
@@ -232,8 +231,8 @@ async function RiwayatContent({
     : "";
 
   const [rows] = await db.query<Riwayat[]>(
-    "SELECT t.id, t.event, " + categorySelect + ", " +
-    "DATE_FORMAT(t.tanggal, '%d/%m/%Y') AS tanggal, t.foto " +
+    "SELECT t.event, " + categorySelect + ", " +
+    "DATE_FORMAT(t.tanggal, '%d/%m/%Y') AS tanggal, SHA2(t.foto, 256) AS foto_ref " +
     "FROM `" + tableName + "` t " + categoryJoin + " " +
     "ORDER BY t.tanggal DESC, t.created_at DESC",
   );
