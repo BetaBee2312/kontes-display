@@ -360,7 +360,33 @@ export default function EventAdminPage() {
 
 
 
-        <div className="overflow-x-auto">
+        <div className="space-y-3 p-3 sm:hidden">
+          {loading ? (
+            <div className="rounded-xl border border-slate-200 p-5 text-center text-sm text-slate-500">Memuat data event...</div>
+          ) : filteredEvents.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 px-5 py-10 text-center">
+              <p className="font-semibold text-slate-700">{search ? "Event tidak ditemukan" : "Belum ada data event"}</p>
+              <p className="mt-1 text-sm text-slate-500">{search ? "Coba kata kunci lain." : "Tambahkan event pertama untuk memulai."}</p>
+            </div>
+          ) : filteredEvents.map((item) => (
+            <article key={String(item.id ?? item.kode_event)} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700">
+                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="h-5 w-5"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M7.5 3.5v3M16.5 3.5v3M3.5 9.5h17"/></svg>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="break-words font-semibold text-slate-900">{item.nama_event}</h3>
+                  <p className="mt-1 inline-flex max-w-full break-all rounded-md bg-slate-100 px-2 py-1 font-mono text-xs font-medium text-slate-600">{item.kode_event}</p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                <button type="button" onClick={() => openEdit(item)} className="rounded-lg border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Edit</button>
+                <button type="button" onClick={() => void handleDelete(item)} disabled={deletingKode === item.kode_event} className="rounded-lg border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50">{deletingKode === item.kode_event ? "Menghapus..." : "Hapus"}</button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[650px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
