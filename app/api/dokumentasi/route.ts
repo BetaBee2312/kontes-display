@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     const field = fieldRows[0] as { id: number; kode_kolom: string; nama_kolom: string };
 
     const tableName = await ensureCabangTable(db, kodeCabang);
-    const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent);
+    const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent, kodeKolom);
     const uploadDir = path.join(process.cwd(), "public", "uploads", "dokumentasi", kodeCabang);
     await mkdir(uploadDir, { recursive: true });
     const fileName = `${documentId}_${kodeKolom}_${crypto.randomUUID()}${extension}`;
