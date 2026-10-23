@@ -87,12 +87,6 @@ export default function AdminLoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6 sm:px-8">
-          {error && (
-            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
           <div>
             <label htmlFor="admin-email" className="mb-2 block text-sm font-medium text-slate-700">Email</label>
             <div className="relative">
