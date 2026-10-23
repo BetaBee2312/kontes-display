@@ -69,8 +69,29 @@ export default function EventAdminPage() {
       const response = await fetch("/api/admin/event", { cache: "no-store" });
       const result = await readResponse(response);
       if (!response.ok) throw new Error(result.message || "Gagal mengambil data event.");
-      setEventList(Array.isArray(result.data) ? result.data : []);
-      await loadPhotoFields();
+      const loadedEvents = (Array.isArray(result.data) ? result.data : []) as EventItem[];
+      setEventList(loadedEvents);
+      const configResponse = await fetch("/api/admin/event-cabang", { cache: "no-store" });
+      const configResult = await readResponse(configResponse);
+      if (!configResponse.ok || !configResult.success) throw new Error(configResult.message || "Gagal mengambil konfigurasi kolom event.");
+      const fields = (configResult.data.fields || []) as PhotoField[];
+      const mappings = (configResult.data.eventFields || []) as Array<{
+        id_event: number | string; id_jenis_dokumentasi: number | string; aktif: number | boolean; wajib: number | boolean; urutan: number;
+      }>;
+      setPhotoFields(fields);
+      const map: Record<string, EventPhotoField[]> = {};
+      for (const event of loadedEvents) {
+        map[String(event.id)] = fields.map((field, index) => {
+          const existing = mappings.find((item) => Number(item.id_event) === Number(event.id) && Number(item.id_jenis_dokumentasi) === Number(field.id));
+          return {
+            id_jenis_dokumentasi: String(field.id),
+            aktif: existing ? Number(existing.aktif) === 1 || existing.aktif === true : false,
+            wajib: existing ? Number(existing.wajib) === 1 || existing.wajib === true : true,
+            urutan: existing ? Number(existing.urutan) : index,
+          };
+        });
+      }
+      setEventFields(map);
     } catch (err) {
       await Swal.fire({ icon: "error", title: "Gagal memuat event", text: err instanceof Error ? err.message : "Gagal mengambil data event." });
     } finally {
@@ -81,30 +102,6 @@ export default function EventAdminPage() {
   useEffect(() => {
     void loadEvents();
   }, [loadEvents]);
-  async function loadPhotoFields() {
-    const response = await fetch("/api/admin/event-cabang", { cache: "no-store" });
-    const result = await readResponse(response);
-    if (!response.ok || !result.success) throw new Error(result.message || "Gagal mengambil jenis dokumentasi.");
-    const fields = (result.data.fields || []) as PhotoField[];
-    const mappings = (result.data.eventFields || []) as Array<{
-      id_event: number | string; id_jenis_dokumentasi: number | string; aktif: number | boolean; wajib: number | boolean; urutan: number;
-    }>;
-    setPhotoFields(fields);
-    const map: Record<string, EventPhotoField[]> = {};
-    for (const event of eventList) {
-      map[String(event.id)] = fields.map((field, index) => {
-        const existing = mappings.find((item) => Number(item.id_event) === Number(event.id) && Number(item.id_jenis_dokumentasi) === Number(field.id));
-        return {
-          id_jenis_dokumentasi: String(field.id),
-          aktif: existing ? Number(existing.aktif) === 1 || existing.aktif === true : false,
-          wajib: existing ? Number(existing.wajib) === 1 || existing.wajib === true : true,
-          urutan: existing ? Number(existing.urutan) : index,
-        };
-      });
-    }
-    setEventFields(map);
-  }
-
   function toggleEventField(eventId: string, fieldId: string, checked: boolean) {
     setEventFields((current) => ({
       ...current,
@@ -135,7 +132,7 @@ export default function EventAdminPage() {
       });
       const result = await readResponse(response);
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan kolom event.");
-      await loadPhotoFields();
+      await loadEvents();
       await Swal.fire({ icon: "success", title: "Kolom event tersimpan", text: `Kolom dokumentasi untuk "${item.nama_event}" berhasil diperbarui.`, timer: 1500, showConfirmButton: false });
     } catch (err) {
       await Swal.fire({ icon: "error", title: "Gagal menyimpan kolom event", text: err instanceof Error ? err.message : "Gagal menyimpan konfigurasi kolom event." });
