@@ -262,13 +262,7 @@ export default function FormPage() {
           const allowedEvents = result.data as EventOption[];
           setEvents(allowedEvents);
           if (allowedEvents.length === 0) {
-            await Swal.fire({
-              icon: "warning",
-              title: "Cabang Belum Terdaftar",
-              text: "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.",
-              confirmButtonText: "Mengerti",
-              confirmButtonColor: "#2563eb",
-            });
+            window.alert("Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
           }
         } else {
 
