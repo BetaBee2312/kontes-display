@@ -32,16 +32,19 @@ type Cabang = {
 
 
 
+type PhotoField = {
+  id: number;
+  kode_kolom: string;
+  nama_kolom: string;
+  urutan: number;
+  wajib: boolean;
+};
+
 type EventOption = {
-
   id: number | string;
-
   nama_event: string;
-
   kode_event: string;
-
-  __isNew__?: boolean;
-
+  columns: PhotoField[];
 };
 
 
@@ -138,15 +141,10 @@ export default function FormPage() {
 
 
 
-  const [fotos, setFotos] =
-
-    useState<File[]>([]);
-
-
-
-  const [previews, setPreviews] =
-
-    useState<string[]>([]);
+  const [fotos, setFotos] = useState<File[]>([]);
+  const [selectedFieldCode, setSelectedFieldCode] = useState("");
+  const [fieldPhotos, setFieldPhotos] = useState<Record<string, File[]>>({});
+  const [fieldPreviews, setFieldPreviews] = useState<Record<string, string[]>>({});
 
 
 
@@ -192,6 +190,12 @@ export default function FormPage() {
 
     useState("");
 
+  const [alertDialog, setAlertDialog] = useState<{ title: string; text: string; icon: "warning" | "error" } | null>(null);
+
+  function showAlert(title: string, text: string, icon: "warning" | "error" = "warning") {
+    setAlertDialog({ title, text, icon });
+  }
+
 
 
 
@@ -231,8 +235,7 @@ export default function FormPage() {
       try {
 
         const response =
-
-          await fetch("/api/event");
+          await fetch(`/api/event?kode_cabang=${encodeURIComponent(String(cabang.kode_cabang))}`);
 
 
 
@@ -243,19 +246,13 @@ export default function FormPage() {
 
 
         if (!response.ok) {
-
-          setError(
-
-            result.message ||
-
-              "Gagal mengambil daftar event."
-
-          );
-
-
-
+          if (response.status === 503 || result.code === "NO_EVENTS") {
+            showAlert("Cabang Belum Terdaftar", result.message || "Cabang ini belum terdaftar di event manapun.");
+            setEvents([]);
+            return;
+          }
+          setError(result.message || "Gagal mengambil daftar event.");
           return;
-
         }
 
 
@@ -268,8 +265,11 @@ export default function FormPage() {
 
         ) {
 
-          setEvents(result.data);
-
+          const allowedEvents = result.data as EventOption[];
+          setEvents(allowedEvents);
+          if (allowedEvents.length === 0) {
+            showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
+          }
         } else {
 
           setEvents([]);
@@ -387,7 +387,9 @@ export default function FormPage() {
   function resetFormSetelahCabang() {
 
     setSelectedEvent(null);
-
+    setSelectedFieldCode("");
+    setFieldPhotos({});
+    setFieldPreviews({});
     setEventSearch("");
 
     setEventOpen(false);
@@ -398,11 +400,10 @@ export default function FormPage() {
 
 
 
-    previews.forEach((url) => URL.revokeObjectURL(url));
-
+    Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
     setFotos([]);
-
-    setPreviews([]);
+    setFieldPhotos({});
+    setFieldPreviews({});
 
 
 
@@ -547,42 +548,33 @@ export default function FormPage() {
 
 
       if (!response.ok) {
-
-        setError(
-
-          result.message ||
-
-            "Cabang tidak ditemukan."
-
-        );
-
-
-
+        if (response.status === 404 && result.code === "BRANCH_NOT_FOUND") {
+          showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
+        } else {
+          setError(result.message || "Gagal memeriksa cabang.");
+        }
         return;
-
       }
-
-
 
       if (!result.success) {
-
-        setError(
-
-          result.message ||
-
-            "Cabang tidak ditemukan."
-
-        );
-
-
-
+        setError(result.message || "Gagal memeriksa cabang.");
         return;
-
       }
 
 
 
-      setCabang(result.data);
+      if (result.code === "CONFIG_NOT_INSTALLED") {
+        showAlert("Konfigurasi Belum Disiapkan", result.message || "Administrator perlu menyiapkan konfigurasi event cabang terlebih dahulu.", "error");
+        return;
+      }
+
+      if (!Array.isArray(result.data?.events) || result.data.events.length === 0) {
+        showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator.");
+        setCabang(null);
+        return;
+      }
+      setCabang({ kode_cabang: result.data.kode_cabang, nama_cabang: result.data.nama_cabang });
+      setEvents(result.data.events as EventOption[]);
 
     } catch (error) {
 
@@ -628,110 +620,6 @@ export default function FormPage() {
 
    */
 
-  function handleCreateEvent(
-
-    namaEvent: string
-
-  ) {
-
-    const nama =
-
-      namaEvent.trim();
-
-
-
-    if (!nama) {
-
-      return;
-
-    }
-
-
-
-    const kodeEvent =
-
-      nama
-
-        .toLowerCase()
-
-        .trim()
-
-        .replace(
-
-          /[^a-z0-9]+/g,
-
-          "_"
-
-        )
-
-        .replace(
-
-          /^_+|_+$/g,
-
-          ""
-
-        );
-
-
-
-    if (!kodeEvent) {
-
-      setError(
-
-        "Nama event tidak menghasilkan kode yang valid."
-
-      );
-
-
-
-      return;
-
-    }
-
-
-
-    const customEvent: EventOption = {
-
-      id: `custom-${Date.now()}`,
-
-      nama_event: nama,
-
-      kode_event: kodeEvent,
-
-      __isNew__: true,
-
-    };
-
-
-
-    setSelectedEvent(
-
-      customEvent
-
-    );
-
-
-
-    setEventSearch("");
-
-    setEventOpen(false);
-
-
-
-    setError("");
-
-
-
-    setMessage(
-
-      `Event "${nama}" digunakan untuk dokumentasi ini.`
-
-    );
-
-  }
-
-
-
   /*
 
    * =====================================================
@@ -749,9 +637,11 @@ export default function FormPage() {
   ) {
 
     setSelectedEvent(event);
-
-
-
+    setSelectedFieldCode(event.columns?.[0]?.kode_kolom || "");
+    setFieldPhotos({});
+    setFieldPreviews({});
+    setFotos([]);
+    setFieldPreviews({});
     setEventSearch("");
 
     setEventOpen(false);
@@ -783,10 +673,12 @@ export default function FormPage() {
   ) {
 
     setError("");
-
     setMessage("");
-
-
+    if (!selectedFieldCode) {
+      setError("Pilih jenis dokumentasi terlebih dahulu.");
+      e.target.value = "";
+      return;
+    }
 
     const selectedFiles = Array.from(e.target.files ?? []);
 
@@ -882,15 +774,9 @@ export default function FormPage() {
 
 
 
+      setFieldPhotos((current) => ({ ...current, [selectedFieldCode]: [...(current[selectedFieldCode] || []), ...compressedFiles] }));
+      setFieldPreviews((current) => ({ ...current, [selectedFieldCode]: [...(current[selectedFieldCode] || []), ...compressedFiles.map((file) => URL.createObjectURL(file))] }));
       setFotos((current) => [...current, ...compressedFiles]);
-
-      setPreviews((current) => [
-
-        ...current,
-
-        ...compressedFiles.map((file) => URL.createObjectURL(file)),
-
-      ]);
 
 
 
@@ -926,18 +812,13 @@ export default function FormPage() {
 
 
 
-  function removeFoto(index: number) {
-
-    const previewUrl = previews[index];
-
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-
-    setFotos((current) => current.filter((_, i) => i !== index));
-
-    setPreviews((current) => current.filter((_, i) => i !== index));
-
-    setMessage("Foto dihapus dari daftar upload.");
-
+  function removeFieldPhoto(fieldCode: string, index: number) {
+    const preview = fieldPreviews[fieldCode]?.[index];
+    if (preview) URL.revokeObjectURL(preview);
+    setFieldPhotos((current) => ({ ...current, [fieldCode]: (current[fieldCode] || []).filter((_, i) => i !== index) }));
+    setFieldPreviews((current) => ({ ...current, [fieldCode]: (current[fieldCode] || []).filter((_, i) => i !== index) }));
+    const removedFile = fieldPhotos[fieldCode]?.[index];
+    setFotos((current) => current.filter((file) => file !== removedFile));
   }
 
 
@@ -952,328 +833,92 @@ export default function FormPage() {
 
    */
 
-  async function handleSubmit(
-
-    e: React.FormEvent<HTMLFormElement>
-
-  ) {
-
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-
-
     setError("");
-
     setMessage("");
 
-
-
-    /*
-
-     * Validasi cabang
-
-     */
-
     if (!cabang) {
-
-      setError(
-
-        "Cabang belum dipilih."
-
-      );
-
-
-
+      setError("Cabang belum dipilih.");
       return;
-
     }
-
-
-
-    /*
-
-     * Validasi event
-
-     */
-
     if (!selectedEvent) {
-
-      setError(
-
-        "Pilih atau tambahkan event terlebih dahulu."
-
-      );
-
-
-
+      setError("Pilih event yang tersedia untuk cabang ini.");
       return;
-
     }
-
-
-
-    /*
-
-     * Validasi tanggal
-
-     */
-
     if (!tanggal) {
-
-      setError(
-
-        "Tanggal wajib diisi."
-
-      );
-
-
-
+      setError("Tanggal wajib diisi.");
       return;
-
     }
 
-
-
-    /*
-
-     * Minimal satu foto wajib dipilih.
-
-     */
-
-    if (fotos.length === 0) {
-
-      setError("Pilih minimal satu foto dokumentasi.");
-
-      return;
-
-    }
-
-
-
-    const fotoTerlaluBesar = fotos.find(
-
-      (file) => file.size > 2 * 1024 * 1024
-
+    const missingRequired = selectedEvent.columns.find((field) =>
+      field.wajib && !(fieldPhotos[field.kode_kolom] || []).length
     );
-
-    if (fotoTerlaluBesar) {
-
-      setError(`Ukuran foto "${fotoTerlaluBesar.name}" melebihi 2 MB.`);
-
+    if (missingRequired) {
+      setError(`Foto ${missingRequired.nama_kolom} wajib diupload.`);
       return;
-
     }
 
-
+    const uploadQueue = selectedEvent.columns.flatMap((field) =>
+      (fieldPhotos[field.kode_kolom] || []).map((foto) => ({ foto, field }))
+    );
+    if (uploadQueue.length === 0) {
+      setError("Pilih minimal satu foto pada kolom dokumentasi yang tersedia.");
+      return;
+    }
+    const tooLarge = uploadQueue.find((item) => item.foto.size > 2 * 1024 * 1024);
+    if (tooLarge) {
+      setError(`Foto "${tooLarge.foto.name}" melebihi 2 MB.`);
+      return;
+    }
 
     setLoadingSubmit(true);
-
-
-
     try {
-
       const savedIds: Array<string | number> = [];
-
-      // API saat ini menerima satu foto per request, jadi kirim satu per satu.
-
-      for (let index = 0; index < fotos.length; index++) {
-
-        const foto = fotos[index];
-
+      for (let index = 0; index < uploadQueue.length; index++) {
+        const { foto, field } = uploadQueue[index];
         const formData = new FormData();
-
         formData.append("kode_cabang", String(cabang.kode_cabang));
-
         formData.append("kode_event", selectedEvent.kode_event);
-
-        formData.append("nama_event", selectedEvent.nama_event);
-
+        formData.append("kode_kolom", field.kode_kolom);
         formData.append("tanggal", tanggal);
-
         formData.append("foto", foto);
 
-
-
-        console.log("Mengirim dokumentasi:", {
-
-          kode_cabang: String(cabang.kode_cabang),
-
-          kode_event: selectedEvent.kode_event,
-
-          nama_event: selectedEvent.nama_event,
-
-          tanggal,
-
-          foto: foto.name,
-
-          ukuran: `${(foto.size / 1024 / 1024).toFixed(2)} MB`,
-
-          urutan: `${index + 1}/${fotos.length}`,
-
-        });
-
-
-
-        const response = await fetch("/api/dokumentasi", {
-
-          method: "POST",
-
-          body: formData,
-
-        });
-
-
-
+        const response = await fetch("/api/dokumentasi", { method: "POST", body: formData });
         const rawText = await response.text();
-
         let result: any;
-
         try {
-
           result = JSON.parse(rawText);
-
         } catch {
-
-          throw new Error(
-
-            `Foto ${index + 1}: server mengembalikan response bukan JSON (HTTP ${response.status}). ${savedIds.length} foto sebelumnya berhasil disimpan.`
-
-          );
-
+          throw new Error(`Foto ${index + 1}: respons server tidak valid (HTTP ${response.status}). ${savedIds.length} foto sebelumnya berhasil disimpan.`);
         }
-
-
-
         if (!response.ok || !result.success) {
-
-          throw new Error(
-
-            `Foto ${index + 1}: ${result.message || `Gagal menyimpan (HTTP ${response.status})`}. ${savedIds.length} foto sebelumnya berhasil disimpan.`
-
-          );
-
+          throw new Error(`Foto ${index + 1}: ${result.message || `Gagal menyimpan (HTTP ${response.status})`}. ${savedIds.length} foto sebelumnya berhasil disimpan.`);
         }
-
-
-
-        if (result.data?.id !== undefined) {
-
-          savedIds.push(result.data.id);
-
-        }
-
+        if (result.data?.id !== undefined) savedIds.push(result.data.id);
       }
 
-
-
-      setMessage(
-
-        `Berhasil menyimpan ${fotos.length} foto dokumentasi${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`
-
-      );
-
-
-
-      /*
-
-       * Reset hanya data dokumentasi.
-
-       *
-
-       * Cabang tetap dipertahankan supaya user
-
-       * bisa upload dokumentasi berikutnya
-
-       * untuk cabang yang sama.
-
-       */
-
-      previews.forEach((url) => URL.revokeObjectURL(url));
-
+      setMessage(`Berhasil menyimpan ${uploadQueue.length} foto dokumentasi${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`);
+      Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
       setFotos([]);
-
-      setPreviews([]);
-
-
-
+      setFieldPhotos({});
+      setFieldPreviews({});
       setTanggal("");
-
-
-
       setSelectedEvent(null);
-
-
-
+      setSelectedFieldCode("");
       setEventSearch("");
-
-
-
       setEventOpen(false);
-
-
-
-      /*
-
-       * Reset input file
-
-       */
-
-      const fileInput =
-
-        document.getElementById(
-
-          "foto-kamera"
-
-        ) as HTMLInputElement | null;
-
-
-
-      if (fileInput) {
-
-        fileInput.value = "";
-
-      }
-
-
-      const galleryInput = document.getElementById(
-
-        "foto-galeri"
-
-      ) as HTMLInputElement | null;
-
+      const cameraInput = document.getElementById("foto-kamera") as HTMLInputElement | null;
+      if (cameraInput) cameraInput.value = "";
+      const galleryInput = document.getElementById("foto-galeri") as HTMLInputElement | null;
       if (galleryInput) galleryInput.value = "";
-
     } catch (error) {
-
-      console.error(
-
-        "UPLOAD ERROR:",
-
-        error
-
-      );
-
-
-
-      setError(
-
-        error instanceof Error
-
-          ? error.message
-
-          : "Terjadi kesalahan saat mengirim data."
-
-      );
-
+      console.error("UPLOAD ERROR:", error);
+      setError(error instanceof Error ? error.message : "Terjadi kesalahan saat mengirim data.");
     } finally {
-
       setLoadingSubmit(false);
-
     }
-
   }
-
-
 
   /*
 
@@ -1285,57 +930,9 @@ export default function FormPage() {
 
    */
 
-  const filteredEvents =
-
-    events.filter((event) =>
-
-      event.nama_event
-
-        .toLowerCase()
-
-        .includes(
-
-          eventSearch
-
-            .toLowerCase()
-
-            .trim()
-
-        )
-
-    );
-
-
-
-  const exactEvent =
-
-    events.some(
-
-      (event) =>
-
-        event.nama_event
-
-          .toLowerCase()
-
-          .trim() ===
-
-        eventSearch
-
-          .toLowerCase()
-
-          .trim()
-
-    );
-
-
-
-  const showCreate =
-
-    eventSearch.trim() &&
-
-    !exactEvent;
-
-
+  const filteredEvents = events.filter((event) =>
+    event.nama_event.toLowerCase().includes(eventSearch.toLowerCase().trim())
+  );
 
   /*
 
@@ -1374,6 +971,22 @@ export default function FormPage() {
   return (
 
     <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
+      {alertDialog && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAlertDialog(null); }}>
+        <section role="alertdialog" aria-modal="true" aria-labelledby="branch-alert-title" aria-describedby="branch-alert-description" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${alertDialog.icon === "error" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+            <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              {alertDialog.icon === "error" ? <><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></> : <><path d="M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 3h.01"/></>}
+            </svg>
+          </div>
+          <h2 id="branch-alert-title" className="mt-4 text-xl font-semibold text-slate-900">{alertDialog.title}</h2>
+          <p id="branch-alert-description" className="mt-2 text-sm leading-6 text-slate-600">{alertDialog.text}</p>
+          <button type="button" autoFocus onClick={() => setAlertDialog(null)} className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">Mengerti</button>
+        </section>
+      </div>
+    )}
+
+
 
       <div className="mx-auto max-w-xl">
 
@@ -2147,59 +1760,9 @@ export default function FormPage() {
 
 
 
-                          {showCreate && (
+                                                    {filteredEvents.length ===
 
-                            <button
-
-                              type="button"
-
-                              onClick={() =>
-
-                                handleCreateEvent(
-
-                                  eventSearch
-
-                                )
-
-                              }
-
-                              className="mt-1 flex w-full items-center gap-3 rounded-lg border-t border-slate-100 px-4 py-3 text-left text-sm font-semibold text-blue-600 transition hover:bg-blue-50"
-
-                            >
-
-                              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-lg">
-
-                                +
-
-                              </span>
-
-
-
-                              <span>
-
-                                Gunakan "
-
-                                {
-
-                                  eventSearch
-
-                                }
-
-                                "
-
-                              </span>
-
-                            </button>
-
-                          )}
-
-
-
-                          {filteredEvents.length ===
-
-                            0 &&
-
-                            !showCreate && (
+                            0 && (
 
                               <div className="px-4 py-8 text-center text-sm text-slate-400">
 
@@ -2220,17 +1783,7 @@ export default function FormPage() {
 
 
                 <p className="mt-2 text-xs leading-5 text-slate-400">
-
-                  Event dari master dapat
-
-                  dipilih. Event baru seperti
-
-                  "Giveaway" langsung digunakan
-
-                  untuk dokumentasi tanpa
-
-                  menambah master.
-
+                  Daftar event dan kolom dokumentasi ditetapkan administrator untuk setiap cabang.
                 </p>
 
               </div>
@@ -2298,7 +1851,23 @@ export default function FormPage() {
                   Dokumentasi Foto
 
                 </label>
-
+                {selectedEvent?.columns?.length ? (
+                  <div className="mb-4 space-y-3">
+                    <label className="block text-sm font-medium text-slate-700">Jenis Dokumentasi</label>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {selectedEvent.columns.map((field) => (
+                        <button key={field.kode_kolom} type="button" onClick={() => setSelectedFieldCode(field.kode_kolom)}
+                          className={`rounded-xl border p-3 text-left transition ${selectedFieldCode === field.kode_kolom ? "border-blue-500 bg-blue-50 ring-2 ring-blue-100" : "border-slate-200 bg-white hover:border-blue-300"}`}>
+                          <span className="block text-sm font-semibold text-slate-800">{field.nama_kolom}{field.wajib ? " *" : ""}</span>
+                          <span className="mt-1 block text-xs text-slate-500">{(fieldPhotos[field.kode_kolom] || []).length} foto</span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500">Pilih jenis dokumentasi, lalu ambil foto atau pilih gambar dari galeri. Field hanya muncul jika diaktifkan admin.</p>
+                  </div>
+                ) : selectedEvent ? (
+                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Event ini belum memiliki kolom foto aktif. Hubungi administrator.</div>
+                ) : null}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 
                   <label
@@ -2403,7 +1972,7 @@ export default function FormPage() {
 
               {/* PREVIEW FOTO */}
 
-              {previews.length > 0 && (
+              {(fieldPreviews[selectedFieldCode] || []).length > 0 && (
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
 
@@ -2417,7 +1986,7 @@ export default function FormPage() {
 
                     <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
 
-                      {fotos.length} foto
+                      {(fieldPhotos[selectedFieldCode] || []).length} foto untuk {selectedEvent?.columns.find((field) => field.kode_kolom === selectedFieldCode)?.nama_kolom || "kolom terpilih"}
 
                     </span>
 
@@ -2425,7 +1994,7 @@ export default function FormPage() {
 
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
 
-                    {previews.map((previewUrl, index) => (
+                    {(fieldPreviews[selectedFieldCode] || []).map((previewUrl, index) => (
 
                       <div key={`${previewUrl}-${index}`} className="min-w-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
 
@@ -2443,13 +2012,13 @@ export default function FormPage() {
 
                           <p className="truncate text-xs font-medium text-slate-700">
 
-                            {fotos[index]?.name}
+                            {fieldPhotos[selectedFieldCode]?.[index]?.name}
 
                           </p>
 
                           <p className="mt-1 text-[11px] text-slate-500">
 
-                            {((fotos[index]?.size || 0) / 1024 / 1024).toFixed(2)} MB
+                            {((fieldPhotos[selectedFieldCode]?.[index]?.size || 0) / 1024 / 1024).toFixed(2)} MB
 
                           </p>
 
@@ -2457,7 +2026,7 @@ export default function FormPage() {
 
                             type="button"
 
-                            onClick={() => removeFoto(index)}
+                            onClick={() => removeFieldPhoto(selectedFieldCode, index)}
 
                             disabled={loadingSubmit || compressing}
 
@@ -2505,7 +2074,7 @@ export default function FormPage() {
 
                   !tanggal ||
 
-                  fotos.length === 0
+                  !selectedEvent?.columns.some((field) => (fieldPhotos[field.kode_kolom] || []).length > 0)
 
                 }
 

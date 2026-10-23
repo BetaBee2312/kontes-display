@@ -26,307 +26,117 @@ interface DokumentasiFotoRow extends RowDataPacket {
 |--------------------------------------------------------------------------
 */
 export async function POST(request: Request) {
-    try {
-        console.log("=================================");
-        console.log("POST /api/dokumentasi");
-        console.log("=================================");
-        const formData = await request.formData();
-        /*
-         * ==========================================
-         * 1. AMBIL DATA
-         * ==========================================
-         */
-        const kodeCabangInput = String(formData.get("kode_cabang") ?? "").trim();
-        const kodeEvent = String(formData.get("kode_event") ?? "").trim();
-        const namaEventInput = String(formData.get("nama_event") ?? "").trim();
-        const tanggal = String(formData.get("tanggal") ?? "").trim();
-        const foto = formData.get("foto");
-        console.log("DATA FORM:", {
-            kodeCabangInput,
-            kodeEvent,
-            namaEventInput,
-            tanggal,
-            foto: foto instanceof File
-                ? foto.name
-                : null,
-        });
-        /*
-         * ==========================================
-         * 2. VALIDASI
-         * ==========================================
-         */
-        if (!kodeCabangInput) {
-            return NextResponse.json({
-                success: false,
-                message: "Kode cabang wajib diisi.",
-            }, {
-                status: 400,
-            });
-        }
-        if (!kodeEvent) {
-            return NextResponse.json({
-                success: false,
-                message: "Kode event wajib diisi.",
-            }, {
-                status: 400,
-            });
-        }
-        if (!tanggal) {
-            return NextResponse.json({
-                success: false,
-                message: "Tanggal wajib diisi.",
-            }, {
-                status: 400,
-            });
-        }
-        if (!(foto instanceof File)) {
-            return NextResponse.json({
-                success: false,
-                message: "Foto wajib diupload.",
-            }, {
-                status: 400,
-            });
-        }
-        /*
-         * ==========================================
-         * 3. VALIDASI FILE
-         * ==========================================
-         */
-        if (!foto.type.startsWith("image/")) {
-            return NextResponse.json({
-                success: false,
-                message: "File harus berupa gambar.",
-            }, {
-                status: 400,
-            });
-        }
-        if (foto.size >
-            2 * 1024 * 1024) {
-            return NextResponse.json({
-                success: false,
-                message: "Ukuran foto maksimal 2 MB.",
-            }, {
-                status: 400,
-            });
-        }
-        /*
-         * ==========================================
-         * 4. CARI CABANG
-         * ==========================================
-         */
-        const [cabangRows] = await db.execute(`
-          SELECT
-            kode_cabang,
-            nama_cabang
-          FROM tb_cabang
-          WHERE kode_cabang = ?
-          LIMIT 1
-        `, [kodeCabangInput]);
-        if (!Array.isArray(cabangRows) ||
-            cabangRows.length === 0) {
-            return NextResponse.json({
-                success: false,
-                message: "Cabang tidak ditemukan.",
-            }, {
-                status: 404,
-            });
-        }
-        const cabang = cabangRows[0] as {
-            kode_cabang: string | number;
-            nama_cabang: string;
-        };
-        const kodeCabang = String(cabang.kode_cabang).trim();
-        const namaCabang = String(cabang.nama_cabang).trim();
-        console.log("CABANG:", {
-            kodeCabang,
-            namaCabang,
-        });
-        /*
-         * ==========================================
-         * 5. TENTUKAN NAMA EVENT
-         * ==========================================
-         *
-         * Prioritas:
-         *
-         * nama_event dari form
-         *        ↓
-         * kalau kosong, cari di tb_event
-         *
-         * Dengan begitu:
-         *
-         * Promina
-         * → bisa dari master
-         *
-         * Giveaway
-         * → bisa event custom
-         */
-        let namaEvent = namaEventInput;
-        if (!namaEvent) {
-            const [eventRows,] = await db.execute(`
-          SELECT
-            nama_event
-          FROM tb_event
-          WHERE kode_event = ?
-            AND aktif = 1
-          LIMIT 1
-        `, [kodeEvent]);
-            if (Array.isArray(eventRows) &&
-                eventRows.length > 0) {
-                const event = eventRows[0] as {
-                    nama_event: string;
-                };
-                namaEvent =
-                    String(event.nama_event).trim();
-            }
-        }
-        if (!namaEvent) {
-            return NextResponse.json({
-                success: false,
-                message: "Nama event wajib diisi.",
-            }, {
-                status: 400,
-            });
-        }
-        console.log("EVENT:", {
-            namaEvent,
-            kodeEvent,
-        });
-        /*
-         * ==========================================
-         * 6. BUAT / PASTIKAN TABEL CABANG
-         * ==========================================
-         *
-         * 23212
-         * ↓
-         * tb_23212
-         */
-        const tableName = await ensureCabangTable(db, kodeCabang);
-        console.log("TABLE:", tableName);
-        /*
-         * ==========================================
-         * 7. GENERATE ID
-         * ==========================================
-         *
-         * 23212_20261008_promina
-         *
-         * atau:
-         *
-         * 23212_20261008_giveaway
-         */
-        const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent);
-        console.log("DOCUMENT ID:", documentId);
-        /*
-         * ==========================================
-         * 8. EXTENSION
-         * ==========================================
-         */
-        const extension = path
-            .extname(foto.name)
-            .toLowerCase();
-        const allowedExtensions = [
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".webp",
-        ];
-        if (!allowedExtensions.includes(extension)) {
-            return NextResponse.json({
-                success: false,
-                message: "Format foto harus JPG, JPEG, PNG, atau WEBP.",
-            }, {
-                status: 400,
-            });
-        }
-        /*
-         * ==========================================
-         * 9. FOLDER UPLOAD
-         * ==========================================
-         */
-        const uploadDir = path.join(process.cwd(), "public", "uploads", "dokumentasi", kodeCabang);
-        await mkdir(uploadDir, {
-            recursive: true,
-        });
-        /*
-         * ==========================================
-         * 10. NAMA FILE
-         * ==========================================
-         */
-        const fileName = `${documentId}_${crypto.randomUUID()}${extension}`;
-        const filePath = path.join(uploadDir, fileName);
-        /*
-         * ==========================================
-         * 11. SIMPAN FILE
-         * ==========================================
-         */
-        const buffer = Buffer.from(await foto.arrayBuffer());
-        await writeFile(filePath, buffer);
-        console.log("FILE BERHASIL DISIMPAN:", filePath);
-        /*
-         * ==========================================
-         * 12. URL FOTO
-         * ==========================================
-         */
-        const fotoUrl = `/uploads/dokumentasi/${kodeCabang}/${fileName}`;
-        /*
-         * ==========================================
-         * 13. INSERT DATABASE
-         * ==========================================
-         */
-        await db.execute(`
-        INSERT INTO \`${tableName}\`
-        (
-          id,
-          event,
-          tanggal,
-          foto
-        )
-        VALUES (?, ?, ?, ?)
-      `, [
-            documentId,
-            namaEvent,
-            tanggal,
-            fotoUrl,
-        ]);
-        console.log("DATABASE BERHASIL DIINSERT");
-        /*
-         * ==========================================
-         * 14. RESPONSE
-         * ==========================================
-         */
-        return NextResponse.json({
-            success: true,
-            message: "Dokumentasi berhasil disimpan.",
-            data: {
-                id: documentId,
-                kode_cabang: kodeCabang,
-                nama_cabang: namaCabang,
-                event: namaEvent,
-                kode_event: kodeEvent,
-                tanggal,
-                foto: fotoUrl,
-                table: tableName,
-            },
-        });
+  let savedFilePath: string | null = null;
+  try {
+    const formData = await request.formData();
+    const kodeCabangInput = String(formData.get("kode_cabang") ?? "").trim();
+    const kodeEvent = String(formData.get("kode_event") ?? "").trim();
+    const kodeKolom = String(formData.get("kode_kolom") ?? "").trim();
+    const tanggal = String(formData.get("tanggal") ?? "").trim();
+    const foto = formData.get("foto");
+
+    if (!/^\d+$/.test(kodeCabangInput)) {
+      return NextResponse.json({ success: false, code: "INVALID_BRANCH", message: "Kode cabang tidak valid." }, { status: 400 });
     }
-    catch (error) {
-        console.error("==========================================");
-        console.error("ERROR POST /api/dokumentasi");
-        console.error(error);
-        console.error("==========================================");
-        return NextResponse.json({
-            success: false,
-            message: error instanceof Error
-                ? error.message
-                : "Internal server error.",
-            error: process.env.NODE_ENV ===
-                "development"
-                ? String(error)
-                : undefined,
-        }, {
-            status: 500,
-        });
+    if (!kodeEvent || !/^[a-z0-9_]+$/.test(kodeEvent)) {
+      return NextResponse.json({ success: false, code: "INVALID_EVENT", message: "Event tidak valid." }, { status: 400 });
     }
+    if (!/^[a-z0-9_]+$/.test(kodeKolom)) {
+      return NextResponse.json({ success: false, code: "INVALID_FIELD", message: "Jenis dokumentasi tidak valid." }, { status: 400 });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(tanggal) || Number.isNaN(Date.parse(`${tanggal}T00:00:00Z`))) {
+      return NextResponse.json({ success: false, code: "INVALID_DATE", message: "Tanggal dokumentasi tidak valid." }, { status: 400 });
+    }
+    if (!(foto instanceof File)) {
+      return NextResponse.json({ success: false, code: "PHOTO_REQUIRED", message: "Foto wajib diupload." }, { status: 400 });
+    }
+    if (!foto.type.startsWith("image/") || foto.size > 2 * 1024 * 1024) {
+      return NextResponse.json({ success: false, code: "INVALID_PHOTO", message: "Foto harus berupa gambar dengan ukuran maksimal 2 MB." }, { status: 400 });
+    }
+    const extension = path.extname(foto.name).toLowerCase();
+    if (![".jpg", ".jpeg", ".png", ".webp"].includes(extension)) {
+      return NextResponse.json({ success: false, code: "INVALID_PHOTO_FORMAT", message: "Format foto harus JPG, JPEG, PNG, atau WEBP." }, { status: 400 });
+    }
+
+    const [branchRows] = await db.execute(
+      `SELECT kode_cabang, nama_cabang FROM tb_cabang WHERE kode_cabang = ? LIMIT 1`,
+      [kodeCabangInput],
+    );
+    if (!Array.isArray(branchRows) || branchRows.length === 0) {
+      return NextResponse.json({ success: false, code: "BRANCH_NOT_FOUND", message: "Cabang tidak ditemukan." }, { status: 404 });
+    }
+    const branch = branchRows[0] as { kode_cabang: string | number; nama_cabang: string };
+    const kodeCabang = String(branch.kode_cabang);
+
+    const [assignmentRows] = await db.execute(
+      `SELECT e.id, e.kode_event, e.nama_event
+       FROM tb_event_cabang ec
+       INNER JOIN tb_event e ON e.id = ec.id_event
+       WHERE ec.kode_cabang = ? AND ec.aktif = 1 AND e.kode_event = ?
+       LIMIT 1`,
+      [kodeCabang, kodeEvent],
+    );
+    if (!Array.isArray(assignmentRows) || assignmentRows.length === 0) {
+      return NextResponse.json({ success: false, code: "EVENT_NOT_ASSIGNED", message: "Event ini tidak terdaftar untuk cabang tersebut." }, { status: 403 });
+    }
+    const event = assignmentRows[0] as { id: number; kode_event: string; nama_event: string };
+
+    const [fieldRows] = await db.execute(
+      `SELECT jd.id, jd.kode_kolom, jd.nama_kolom, ecc.wajib
+       FROM tb_event_cabang_kolom ecc
+       INNER JOIN tb_jenis_dokumentasi jd ON jd.id = ecc.id_jenis_dokumentasi
+       WHERE ecc.kode_cabang = ? AND ecc.id_event = ?
+         AND ecc.aktif = 1 AND jd.aktif = 1 AND jd.kode_kolom = ?
+       LIMIT 1`,
+      [kodeCabang, Number(event.id), kodeKolom],
+    );
+    if (!Array.isArray(fieldRows) || fieldRows.length === 0) {
+      return NextResponse.json({ success: false, code: "FIELD_NOT_ASSIGNED", message: "Jenis foto ini tidak diizinkan untuk event dan cabang tersebut." }, { status: 403 });
+    }
+    const field = fieldRows[0] as { id: number; kode_kolom: string; nama_kolom: string; wajib: number };
+
+    const tableName = await ensureCabangTable(db, kodeCabang);
+    const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent, kodeKolom);
+    const uploadDir = path.join(process.cwd(), "public", "uploads", "dokumentasi", kodeCabang);
+    await mkdir(uploadDir, { recursive: true });
+    const fileName = `${documentId}_${kodeKolom}_${crypto.randomUUID()}${extension}`;
+    savedFilePath = path.join(uploadDir, fileName);
+    await writeFile(savedFilePath, Buffer.from(await foto.arrayBuffer()));
+    const fotoUrl = `/uploads/dokumentasi/${kodeCabang}/${fileName}`;
+
+    await db.execute(
+      `INSERT INTO \`${tableName}\` (id, event, tanggal, foto, kode_kolom)
+       VALUES (?, ?, ?, ?, ?)`,
+      [documentId, String(event.nama_event).trim(), tanggal, fotoUrl, kodeKolom],
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Dokumentasi berhasil disimpan.",
+      data: {
+        id: documentId,
+        kode_cabang: kodeCabang,
+        nama_cabang: String(branch.nama_cabang),
+        event: String(event.nama_event),
+        kode_event: String(event.kode_event),
+        kode_kolom: field.kode_kolom,
+        nama_kolom: field.nama_kolom,
+        tanggal,
+        foto: fotoUrl,
+        table: tableName,
+      },
+    });
+  } catch (error) {
+    if (savedFilePath) await unlink(savedFilePath).catch(() => undefined);
+    console.error("POST /api/dokumentasi:", error);
+    const code = error && typeof error === "object" && "code" in error ? String((error as {code?:unknown}).code) : "";
+    if (code === "ER_NO_SUCH_TABLE") {
+      return NextResponse.json({ success: false, code: "CONFIG_NOT_INSTALLED", message: "Konfigurasi event belum dipasang. Jalankan migration database terlebih dahulu." }, { status: 503 });
+    }
+    return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Gagal menyimpan dokumentasi." }, { status: 500 });
+  }
 }
+
 /*
 |--------------------------------------------------------------------------
 | DELETE

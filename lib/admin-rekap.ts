@@ -32,6 +32,7 @@ export type DocumentationRow = {
   tanggal: string;
   waktu_upload: string | null;
   foto: string | null;
+  kode_kolom?: string | null;
 };
 
 export const REPORT_MODES: ReportMode[] = [
@@ -123,7 +124,8 @@ export async function getDocumentationUnionSql(): Promise<string | null> {
       CAST(event AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS nama_event,
       CAST(DATE_FORMAT(tanggal, '%Y-%m-%d') AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS tanggal,
       ${timestampExpression} AS waktu_upload,
-      CAST(foto AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS foto
+      CAST(foto AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci AS foto,
+      ${cols.has("kode_kolom") ? "CAST(kode_kolom AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_unicode_ci" : "'foto'"} AS kode_kolom
       FROM \`${tableName}\``;
   }).join(" UNION ALL ");
 }

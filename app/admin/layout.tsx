@@ -32,6 +32,12 @@ const navigation: {
     description: "Kelola event terdaftar",
   },
   {
+    label: "Konfigurasi Event Cabang",
+    href: "/admin/event-cabang",
+    icon: "documents",
+    description: "Atur event dan kolom foto per cabang",
+  },
+  {
     label: "Rekap Dokumentasi",
     href: "/admin/rekap",
     icon: "reports",
