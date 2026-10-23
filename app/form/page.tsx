@@ -919,7 +919,7 @@ if (!cabang) {
 
   return (
 
-    <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
+    <main className="min-h-screen bg-slate-100 px-4 py-7 text-slate-900 sm:px-6 sm:py-10">
       <div className="mx-auto max-w-xl">
 
         {/* =================================================
@@ -928,32 +928,23 @@ if (!cabang) {
 
         ================================================= */}
 
-        <div className="mb-8">
-
-          <p className="text-sm font-semibold tracking-wide text-blue-600">
-
-            MARKETING DOCUMENTATION
-
+        <div className="mb-6 sm:mb-8">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-600 sm:text-sm">
+            Marketing Documentation
           </p>
 
-
-
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">
-
-            UPLOAD DOCUMENTATION BY MARKETING
-
+          <h1 className="mt-3 max-w-lg text-[2rem] font-extrabold leading-[1.12] tracking-tight text-slate-900 sm:text-4xl">
+            Upload Documentation
+            <span className="mt-1 block text-blue-600">by Marketing</span>
           </h1>
 
-
-
-          <div className="mt-4 flex justify-center">
+          <div className="mt-5 flex justify-center rounded-2xl bg-white/70 px-4 py-3 sm:mt-6">
             <img
               src="/logo/logoyomart.png"
               alt="Yomart"
-              className="h-auto w-full max-w-[280px] object-contain"
+              className="h-auto w-full max-w-[250px] object-contain sm:max-w-[280px]"
             />
           </div>
-
         </div>
 
 
