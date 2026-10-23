@@ -670,9 +670,11 @@ export default function FormPage() {
   ) {
 
     setSelectedEvent(event);
-
-
-
+    setSelectedFieldCode(event.columns?.[0]?.kode_kolom || "");
+    setFieldPhotos({});
+    setFieldPreviews({});
+    setFotos([]);
+    setPreviews([]);
     setEventSearch("");
 
     setEventOpen(false);
@@ -1003,7 +1005,6 @@ export default function FormPage() {
 
         formData.append("kode_event", selectedEvent.kode_event);
 
-        formData.append("nama_event", selectedEvent.nama_event);
         formData.append("kode_kolom", field.kode_kolom);
 
         formData.append("tanggal", tanggal);
@@ -2336,7 +2337,7 @@ export default function FormPage() {
 
               {/* PREVIEW FOTO */}
 
-              {previews.length > 0 && (
+              {(fieldPreviews[selectedFieldCode] || []).length > 0 && (
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
 
