@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import type { ReactNode } from "react";
 
 type Overview = {
@@ -212,7 +213,9 @@ export default function AdminPage() {
       .then((result) => { if (active) setData(result); })
       .catch((reason: unknown) => {
         if (!active || (reason instanceof Error && reason.name === "AbortError")) return;
-        setError(reason instanceof Error ? reason.message : "Terjadi kesalahan saat memuat dashboard.");
+        const message = reason instanceof Error ? reason.message : "Terjadi kesalahan saat memuat dashboard.";
+      setError(message);
+      void Swal.fire({ icon: "error", title: "Gagal memuat dashboard", text: message });
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; controller.abort(); };
