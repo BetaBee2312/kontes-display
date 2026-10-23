@@ -33,11 +33,6 @@ export default function RiwayatClient({
   const [deleting, setDeleting] =
     useState(false);
 
-  const [error, setError] =
-    useState("");
-
-  const [message, setMessage] =
-    useState("");
 
   /*
    * ==========================================
@@ -60,8 +55,6 @@ export default function RiwayatClient({
    */
 
   function toggleSelectAll() {
-    setError("");
-    setMessage("");
 
     if (allSelected) {
       setSelectedIds([]);
@@ -80,8 +73,6 @@ export default function RiwayatClient({
    */
 
   function toggleSelect(id: string) {
-    setError("");
-    setMessage("");
 
     setSelectedIds((current) => {
       if (current.includes(id)) {
@@ -124,8 +115,6 @@ export default function RiwayatClient({
     if (!confirmation.isConfirmed) return;
 
     setDeleting(true);
-    setError("");
-    setMessage("");
 
     try {
       const response =
