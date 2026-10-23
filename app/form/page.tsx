@@ -2065,55 +2065,7 @@ export default function FormPage() {
 
 
 
-                          {showCreate && (
-
-                            <button
-
-                              type="button"
-
-                              onClick={() =>
-
-                                handleCreateEvent(
-
-                                  eventSearch
-
-                                )
-
-                              }
-
-                              className="mt-1 flex w-full items-center gap-3 rounded-lg border-t border-slate-100 px-4 py-3 text-left text-sm font-semibold text-blue-600 transition hover:bg-blue-50"
-
-                            >
-
-                              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-lg">
-
-                                +
-
-                              </span>
-
-
-
-                              <span>
-
-                                Gunakan "
-
-                                {
-
-                                  eventSearch
-
-                                }
-
-                                "
-
-                              </span>
-
-                            </button>
-
-                          )}
-
-
-
-                          {filteredEvents.length ===
+                                                    {filteredEvents.length ===
 
                             0 &&
 
@@ -2138,17 +2090,7 @@ export default function FormPage() {
 
 
                 <p className="mt-2 text-xs leading-5 text-slate-400">
-
-                  Event dari master dapat
-
-                  dipilih. Event baru seperti
-
-                  "Giveaway" langsung digunakan
-
-                  untuk dokumentasi tanpa
-
-                  menambah master.
-
+                  Daftar event dan kolom dokumentasi ditetapkan administrator untuk setiap cabang.
                 </p>
 
               </div>
