@@ -26,7 +26,7 @@ export async function GET() {
       `SELECT kode_cabang, nama_cabang, singkatan FROM tb_cabang ORDER BY nama_cabang ASC`,
     );
     const [events] = await db.query(
-      `SELECT id, kode_event, nama_event, COALESCE(aktif, 1) AS aktif FROM tb_event ORDER BY nama_event ASC`,
+      `SELECT id, kode_event, nama_event, 1 AS aktif FROM tb_event ORDER BY nama_event ASC`,
     );
     const [assignments] = await db.query(
       `SELECT id, kode_cabang, id_event, aktif FROM tb_event_cabang ORDER BY kode_cabang, id_event`,
