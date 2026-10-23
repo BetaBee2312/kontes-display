@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     const documentId = await generateDocumentId(db, tableName, kodeCabang, tanggal, kodeEvent, kodeKolom);
     const uploadDir = path.join(process.cwd(), "public", "uploads", "dokumentasi", kodeCabang);
     await mkdir(uploadDir, { recursive: true });
-    const fileName = `${documentId}_${crypto.randomUUID()}${extension}`;
+    const fileName = `${crypto.randomUUID()}${extension}`;
     savedFilePath = path.join(uploadDir, fileName);
     await writeFile(savedFilePath, Buffer.from(await foto.arrayBuffer()));
     const fotoUrl = `/uploads/dokumentasi/${kodeCabang}/${fileName}`;
@@ -112,18 +112,6 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "Dokumentasi berhasil disimpan.",
-      data: {
-        id: documentId,
-        kode_cabang: kodeCabang,
-        nama_cabang: String(branch.nama_cabang),
-        event: String(event.nama_event),
-        kode_event: String(event.kode_event),
-        kode_kolom: field.kode_kolom,
-        nama_kolom: field.nama_kolom,
-        tanggal,
-        foto: fotoUrl,
-        table: tableName,
-      },
     });
   } catch (error) {
     if (savedFilePath) await unlink(savedFilePath).catch(() => undefined);
@@ -155,193 +143,81 @@ export async function POST(request: Request) {
 */
 export async function DELETE(request: Request) {
     try {
-        console.log("=================================");
-        console.log("DELETE /api/dokumentasi");
-        console.log("=================================");
         const body = await request.json();
-        /*
-         * ==========================================
-         * 1. DATA
-         * ==========================================
-         */
         const kodeCabang = String(body.kode_cabang ?? "").trim();
         const ids = Array.isArray(body.ids)
-            ? body.ids
-                .map((id: unknown) => String(id).trim())
-                .filter(Boolean)
+            ? body.ids.map((id: unknown) => String(id).trim()).filter(Boolean)
             : [];
-        /*
-         * ==========================================
-         * 2. VALIDASI
-         * ==========================================
-         */
-        if (!kodeCabang) {
-            return NextResponse.json({
-                success: false,
-                message: "Kode cabang wajib diisi.",
-            }, {
-                status: 400,
-            });
-        }
+        const fotoRefs = Array.isArray(body.foto_refs)
+            ? body.foto_refs.map((ref: unknown) => String(ref).trim()).filter(Boolean)
+            : [];
+        const usePhotoRefs = fotoRefs.length > 0;
+
         if (!/^\d+$/.test(kodeCabang)) {
-            return NextResponse.json({
-                success: false,
-                message: "Kode cabang tidak valid.",
-            }, {
-                status: 400,
-            });
+            return NextResponse.json({ success: false, message: "Kode cabang tidak valid." }, { status: 400 });
         }
-        if (ids.length === 0) {
-            return NextResponse.json({
-                success: false,
-                message: "Tidak ada dokumentasi yang dipilih.",
-            }, {
-                status: 400,
-            });
+        if (usePhotoRefs && fotoRefs.some((ref: string) => !/^[a-f0-9]{64}$/i.test(ref))) {
+            return NextResponse.json({ success: false, message: "Referensi foto tidak valid." }, { status: 400 });
         }
-        /*
-         * ==========================================
-         * 3. TABLE
-         * ==========================================
-         */
+        if (!usePhotoRefs && ids.length === 0) {
+            return NextResponse.json({ success: false, message: "Tidak ada dokumentasi yang dipilih." }, { status: 400 });
+        }
+
         const tableName = getCabangTableName(kodeCabang);
-        /*
-         * ==========================================
-         * 4. CEK CABANG
-         * ==========================================
-         *
-         * Supaya URL / request tidak bisa
-         * sembarang menunjuk ke table lain.
-         */
-        const [cabangRows] = await db.execute(`
-          SELECT
-            kode_cabang
-          FROM tb_cabang
-          WHERE kode_cabang = ?
-          LIMIT 1
-        `, [kodeCabang]);
-        if (!Array.isArray(cabangRows) ||
-            cabangRows.length === 0) {
-            return NextResponse.json({
-                success: false,
-                message: "Cabang tidak ditemukan.",
-            }, {
-                status: 404,
-            });
+        const [cabangRows] = await db.execute(
+            "SELECT kode_cabang FROM tb_cabang WHERE kode_cabang = ? LIMIT 1",
+            [kodeCabang],
+        );
+        if (!Array.isArray(cabangRows) || cabangRows.length === 0) {
+            return NextResponse.json({ success: false, message: "Cabang tidak ditemukan." }, { status: 404 });
         }
-        /*
-         * ==========================================
-         * 5. PLACEHOLDER
-         * ==========================================
-         */
-        const placeholders = ids
-            .map(() => "?")
-            .join(", ");
-        /*
-         * ==========================================
-         * 6. AMBIL FILE
-         * ==========================================
-         */
-        const [rows] = await db.query<DokumentasiFotoRow[]>(`
-          SELECT
-            id,
-            foto
-          FROM \`${tableName}\`
-          WHERE id IN (${placeholders})
-        `, ids);
+
+        const targets = usePhotoRefs ? fotoRefs : ids;
+        const placeholders = targets.map(() => "?").join(", ");
+        const query = usePhotoRefs
+            ? `SELECT id, foto FROM \`${tableName}\` WHERE SHA2(foto, 256) IN (${placeholders})`
+            : `SELECT id, foto FROM \`${tableName}\` WHERE id IN (${placeholders})`;
+        const [rows] = await db.query<DokumentasiFotoRow[]>(query, targets);
         if (rows.length === 0) {
-            return NextResponse.json({
-                success: false,
-                message: "Data dokumentasi tidak ditemukan.",
-            }, {
-                status: 404,
-            });
+            return NextResponse.json({ success: false, message: "Data dokumentasi tidak ditemukan." }, { status: 404 });
         }
-        console.log("DATA AKAN DIHAPUS:", rows.map((row) => row.id));
-        /*
-         * ==========================================
-         * 7. HAPUS DATABASE
-         * ==========================================
-         */
-        await db.query(`
-        DELETE FROM \`${tableName}\`
-        WHERE id IN (${placeholders})
-      `, ids);
-        /*
-         * ==========================================
-         * 8. HAPUS FILE FISIK
-         * ==========================================
-         */
+
+        const rowIds = rows.map((row) => row.id);
+        const deletePlaceholders = rowIds.map(() => "?").join(", ");
+        await db.query(
+            `DELETE FROM \`${tableName}\` WHERE id IN (${deletePlaceholders})`,
+            rowIds,
+        );
+
         let deletedFiles = 0;
+        const allowedRoot = path.resolve(process.cwd(), "public", "uploads", "dokumentasi");
         for (const row of rows) {
-            if (!row.foto) {
-                continue;
-            }
-            /*
-             * Contoh:
-             *
-             * /uploads/dokumentasi/23212/file.jpg
-             *
-             * menjadi:
-             *
-             * public/uploads/dokumentasi/23212/file.jpg
-             */
-            const relativePath = row.foto.startsWith("/")
-                ? row.foto.slice(1)
-                : row.foto;
-            const filePath = path.join(process.cwd(), "public", relativePath);
-            /*
-             * Pastikan file hanya berada
-             * di folder uploads/dokumentasi.
-             */
-            const allowedRoot = path.join(process.cwd(), "public", "uploads", "dokumentasi");
-            const normalizedFile = path.resolve(filePath);
-            const normalizedRoot = path.resolve(allowedRoot);
-            if (!normalizedFile.startsWith(normalizedRoot +
-                path.sep)) {
+            if (!row.foto) continue;
+            const relativePath = row.foto.startsWith("/") ? row.foto.slice(1) : row.foto;
+            const filePath = path.resolve(process.cwd(), "public", relativePath);
+            if (!filePath.startsWith(allowedRoot + path.sep)) {
                 console.warn("Path file tidak diizinkan:", filePath);
                 continue;
             }
             try {
-                await unlink(normalizedFile);
+                await unlink(filePath);
                 deletedFiles++;
-            }
-            catch (fileError) {
-                /*
-                 * Record database tetap sudah
-                 * berhasil dihapus.
-                 *
-                 * Kalau file memang sudah hilang,
-                 * tidak perlu membuat delete request
-                 * gagal total.
-                 */
-                console.warn("File tidak ditemukan atau gagal dihapus:", normalizedFile, fileError);
+            } catch (fileError) {
+                console.warn("File tidak ditemukan atau gagal dihapus:", filePath, fileError);
             }
         }
-        /*
-         * ==========================================
-         * 9. RESPONSE
-         * ==========================================
-         */
+
         return NextResponse.json({
             success: true,
             message: "Dokumentasi berhasil dihapus.",
             deletedCount: rows.length,
             deletedFiles,
         });
-    }
-    catch (error) {
-        console.error("==========================================");
-        console.error("ERROR DELETE /api/dokumentasi");
-        console.error(error);
-        console.error("==========================================");
+    } catch (error) {
+        console.error("DELETE /api/dokumentasi:", error);
         return NextResponse.json({
             success: false,
-            message: error instanceof Error
-                ? error.message
-                : "Gagal menghapus dokumentasi.",
-        }, {
-            status: 500,
-        });
+            message: error instanceof Error ? error.message : "Gagal menghapus dokumentasi.",
+        }, { status: 500 });
     }
 }

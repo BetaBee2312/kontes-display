@@ -817,7 +817,7 @@ if (!cabang) {
 
     setLoadingSubmit(true);
     try {
-      const savedIds: Array<string | number> = [];
+      let savedCount = 0;
       for (let index = 0; index < uploadQueue.length; index++) {
         const { foto, field } = uploadQueue[index];
         const formData = new FormData();
@@ -833,15 +833,21 @@ if (!cabang) {
         try {
           result = JSON.parse(rawText);
         } catch {
-          throw new Error(`Foto ${index + 1}: respons server tidak valid (HTTP ${response.status}). ${savedIds.length} foto sebelumnya berhasil disimpan.`);
+          throw new Error(`Foto ${index + 1}: respons server tidak valid (HTTP ${response.status}). ${savedCount} foto sebelumnya berhasil disimpan.`);
         }
         if (!response.ok || !result.success) {
-          throw new Error(`Foto ${index + 1}: ${result.message || `Gagal menyimpan (HTTP ${response.status})`}. ${savedIds.length} foto sebelumnya berhasil disimpan.`);
+          throw new Error(`Foto ${index + 1}: ${result.message || `Gagal menyimpan (HTTP ${response.status})`}. ${savedCount} foto sebelumnya berhasil disimpan.`);
         }
-        if (result.data?.id !== undefined) savedIds.push(result.data.id);
+        savedCount += 1;
       }
 
-      await Swal.fire({ icon: "success", title: "Dokumentasi berhasil disimpan", text: `${uploadQueue.length} foto tersimpan${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`, confirmButtonText: "Selesai" });
+      const uploadedCategories = Array.from(new Set(uploadQueue.map(({ field }) => field.nama_kolom)));
+      await Swal.fire({
+        icon: "success",
+        title: "Dokumentasi berhasil disimpan",
+        text: `${savedCount} foto tersimpan untuk ${selectedEvent.nama_event}. Jenis dokumentasi: ${uploadedCategories.join(", ")}.`,
+        confirmButtonText: "Selesai",
+      });
       Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
       setFotos([]);
       setFieldPhotos({});

@@ -13,10 +13,10 @@ type Cabang = {
 };
 
 interface Riwayat extends RowDataPacket {
-  id: string;
   event: string;
+  kategori: string;
   tanggal: string;
-  foto: string;
+  foto_ref: string;
 }
 
 export default function RiwayatPage(
@@ -217,23 +217,25 @@ async function RiwayatContent({
    * ==========================================
    */
 
-  const [rows] =
-    await db.query<Riwayat[]>(
-      `
-        SELECT
-          id,
-          event,
-          DATE_FORMAT(
-            tanggal,
-            '%d/%m/%Y'
-          ) AS tanggal,
-          foto
-        FROM \`${tableName}\`
-        ORDER BY
-          tanggal DESC,
-          created_at DESC
-      `
-    );
+  const [columnRows] = await db.execute(
+    "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS " +
+    "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = 'kode_kolom' LIMIT 1",
+    [tableName],
+  );
+  const hasCategoryCode = Array.isArray(columnRows) && columnRows.length > 0;
+  const categorySelect = hasCategoryCode
+    ? "COALESCE(NULLIF(TRIM(jd.nama_kolom), ''), NULLIF(TRIM(t.kode_kolom), ''), 'Dokumentasi') AS kategori"
+    : "'Dokumentasi' AS kategori";
+  const categoryJoin = hasCategoryCode
+    ? "LEFT JOIN tb_jenis_dokumentasi jd ON jd.kode_kolom = t.kode_kolom"
+    : "";
+
+  const [rows] = await db.query<Riwayat[]>(
+    "SELECT t.event, " + categorySelect + ", " +
+    "DATE_FORMAT(t.tanggal, '%d/%m/%Y') AS tanggal, SHA2(t.foto, 256) AS foto_ref " +
+    "FROM `" + tableName + "` t " + categoryJoin + " " +
+    "ORDER BY t.tanggal DESC, t.created_at DESC",
+  );
 
   return (
     <div>
