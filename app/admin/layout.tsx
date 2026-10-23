@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import Swal from "sweetalert2";
 
 type IconName = "dashboard" | "branches" | "events" | "reports" | "documents";
 
@@ -148,12 +149,32 @@ export default function AdminLayout({
   }, [isLoginPage, pathname, router]);
 
   async function handleLogout() {
+    const confirmation = await Swal.fire({
+      icon: "question",
+      title: "Keluar dari admin?",
+      text: "Sesi admin akan diakhiri pada perangkat ini.",
+      showCancelButton: true,
+      confirmButtonText: "Keluar",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#dc2626",
+      reverseButtons: true,
+    });
+    if (!confirmation.isConfirmed) return;
+
     setLoggingOut(true);
     try {
-      await fetch("/api/admin/auth/logout", { method: "POST" });
-    } finally {
+      const response = await fetch("/api/admin/auth/logout", { method: "POST" });
+      if (!response.ok) throw new Error("Sesi tidak berhasil ditutup.");
       router.replace("/admin/login");
       router.refresh();
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal keluar",
+        text: error instanceof Error ? error.message : "Terjadi kesalahan saat keluar.",
+      });
+    } finally {
+      setLoggingOut(false);
     }
   }
 
@@ -173,7 +194,7 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen min-w-0">
         {/* SIDEBAR DESKTOP */}
         <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white px-4 py-5 lg:flex lg:flex-col">
           <Link href="/admin" className="flex items-center gap-3 rounded-lg px-2 py-3">

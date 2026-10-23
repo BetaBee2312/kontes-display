@@ -4,6 +4,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import Swal from "sweetalert2";
 
 type Riwayat = {
   id: string;
@@ -32,11 +33,6 @@ export default function RiwayatClient({
   const [deleting, setDeleting] =
     useState(false);
 
-  const [error, setError] =
-    useState("");
-
-  const [message, setMessage] =
-    useState("");
 
   /*
    * ==========================================
@@ -59,8 +55,6 @@ export default function RiwayatClient({
    */
 
   function toggleSelectAll() {
-    setError("");
-    setMessage("");
 
     if (allSelected) {
       setSelectedIds([]);
@@ -79,8 +73,6 @@ export default function RiwayatClient({
    */
 
   function toggleSelect(id: string) {
-    setError("");
-    setMessage("");
 
     setSelectedIds((current) => {
       if (current.includes(id)) {
@@ -110,18 +102,19 @@ export default function RiwayatClient({
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Hapus ${selectedIds.length} dokumentasi yang dipilih?\n\nFoto dan data tersebut akan dihapus permanen.`
-      );
-
-    if (!confirmed) {
-      return;
-    }
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: "Hapus dokumentasi?",
+      text: `Hapus ${selectedIds.length} dokumentasi terpilih? Foto dan data tersebut akan dihapus permanen.`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#dc2626",
+      reverseButtons: true,
+    });
+    if (!confirmation.isConfirmed) return;
 
     setDeleting(true);
-    setError("");
-    setMessage("");
 
     try {
       const response =
@@ -174,9 +167,13 @@ export default function RiwayatClient({
 
       setSelectedIds([]);
 
-      setMessage(
-        `${result.deletedCount} dokumentasi berhasil dihapus.`
-      );
+      await Swal.fire({
+        icon: "success",
+        title: "Dokumentasi dihapus",
+        text: `${result.deletedCount} dokumentasi berhasil dihapus.`,
+        timer: 1700,
+        showConfirmButton: false,
+      });
 
     } catch (error) {
       console.error(
@@ -184,11 +181,11 @@ export default function RiwayatClient({
         error
       );
 
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Gagal menghapus dokumentasi."
-      );
+      await Swal.fire({
+        icon: "error",
+        title: "Gagal menghapus dokumentasi",
+        text: error instanceof Error ? error.message : "Gagal menghapus dokumentasi.",
+      });
     } finally {
       setDeleting(false);
     }
@@ -214,11 +211,7 @@ export default function RiwayatClient({
   if (rows.length === 0) {
     return (
       <div className="mt-8">
-        {message && (
-          <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
-            {message}
-          </div>
-        )}
+
 
         <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
           <div className="text-4xl">
@@ -249,17 +242,9 @@ export default function RiwayatClient({
     <div className="mt-8">
 
       {/* MESSAGE */}
-      {error && (
-        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
-          {error}
-        </div>
-      )}
 
-      {message && (
-        <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
-          {message}
-        </div>
-      )}
+
+
 
       {/* TOOLBAR */}
       <div className="sticky top-4 z-20 mb-6 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">

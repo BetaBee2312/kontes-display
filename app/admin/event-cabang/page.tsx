@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 
 type Branch = { kode_cabang: string | number; nama_cabang: string; singkatan?: string };
 type EventItem = { id: number | string; kode_event: string; nama_event: string; aktif?: number | boolean };
@@ -31,13 +32,10 @@ export default function BranchEventConfigPage() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const [fieldNameDraft, setFieldNameDraft] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError("");
     try {
       const response = await fetch("/api/admin/event-cabang", { cache: "no-store" });
       const result = await response.json();
@@ -48,7 +46,8 @@ export default function BranchEventConfigPage() {
       setAssignments(result.data.assignments || []);
       setFieldAssignments(result.data.fieldAssignments || []);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal memuat konfigurasi.");
+      const message = e instanceof Error ? e.message : "Gagal memuat konfigurasi.";
+      await Swal.fire({ icon: "error", title: "Gagal memuat konfigurasi", text: message });
     } finally {
       setLoading(false);
     }
@@ -102,14 +101,14 @@ export default function BranchEventConfigPage() {
 
   async function addField() {
     const name = fieldNameDraft.trim();
-    if (!name) { setError("Nama kolom foto wajib diisi."); return; }
+    if (!name) { await Swal.fire({ icon: "warning", title: "Nama kolom wajib diisi", text: "Masukkan nama kolom dokumentasi terlebih dahulu." }); return; }
     const code = name.toLowerCase().trim().normalize("NFKD")
       .replace(/[\\u0300-\\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "")
       .slice(0, 50);
-    if (!code) { setError("Nama kolom tidak menghasilkan kode yang valid."); return; }
-    setError(""); setMessage("");
+    if (!code) { await Swal.fire({ icon: "warning", title: "Nama kolom tidak valid", text: "Gunakan nama yang terdiri dari huruf atau angka." }); return; }
+   
     try {
       const response = await fetch("/api/admin/event-cabang", {
         method: "POST",
@@ -127,12 +126,12 @@ export default function BranchEventConfigPage() {
       setFieldAssignments(refreshed.data.fieldAssignments || []);
       setEvents(refreshed.data.events || []);
       setBranches(refreshed.data.cabang || []);
-      setMessage(result.message || "Kolom foto berhasil ditambahkan.");
-    } catch (e) { setError(e instanceof Error ? e.message : "Gagal menambah kolom foto."); }
+      await Swal.fire({ icon: "success", title: "Kolom foto ditambahkan", text: result.message || "Kolom foto berhasil ditambahkan.", timer: 1700, showConfirmButton: false });
+    } catch (e) { const message = e instanceof Error ? e.message : "Gagal menambah kolom foto."; await Swal.fire({ icon: "error", title: "Gagal menambah kolom", text: message }); }
   }
   async function save() {
-    if (!selectedBranch) { setError("Pilih cabang terlebih dahulu."); return; }
-    setSaving(true); setError(""); setMessage("");
+    if (!selectedBranch) { await Swal.fire({ icon: "warning", title: "Pilih cabang", text: "Pilih cabang terlebih dahulu." }); return; }
+    setSaving(true);
     try {
       const response = await fetch("/api/admin/event-cabang", {
         method: "PUT",
@@ -141,16 +140,17 @@ export default function BranchEventConfigPage() {
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan konfigurasi.");
-      setMessage(result.message || "Konfigurasi berhasil disimpan.");
+      await Swal.fire({ icon: "success", title: "Konfigurasi tersimpan", text: result.message || "Konfigurasi berhasil disimpan.", timer: 1700, showConfirmButton: false });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.");
+      const message = e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.";
+      await Swal.fire({ icon: "error", title: "Gagal menyimpan konfigurasi", text: message });
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6 lg:p-8">
+    <main className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-3 sm:p-6 lg:p-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Access control</p>
@@ -163,10 +163,10 @@ export default function BranchEventConfigPage() {
           className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Muat ulang</button>
       </header>
 
-      {(error || message) && <div role="status" className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>{error || message}</div>}
+
 
       {loading ? <div className="rounded-xl border border-slate-200 bg-white p-12 text-center text-sm text-slate-500">Memuat data cabang dan event...</div> : (
-        <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[280px_minmax(0,1fr)] 2xl:gap-6">
           <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white">
             <div className="border-b border-slate-200 p-4">
               <h2 className="font-semibold text-slate-900">Pilih Cabang</h2>
@@ -174,9 +174,9 @@ export default function BranchEventConfigPage() {
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari kode/nama cabang..."
                 className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
             </div>
-            <div className="max-h-[65vh] overflow-y-auto p-2">
+            <div className="max-h-[38vh] overflow-y-auto p-2 sm:max-h-[50vh] xl:max-h-[calc(100vh-18rem)]">
               {visibleBranches.map((item) => (
-                <button key={String(item.kode_cabang)} type="button" onClick={() => { setSelectedBranch(String(item.kode_cabang)); setError(""); setMessage(""); }}
+                <button key={String(item.kode_cabang)} type="button" onClick={() => { setSelectedBranch(String(item.kode_cabang)); }}
                   className={`mb-1 w-full rounded-lg p-3 text-left transition ${selectedBranch === String(item.kode_cabang) ? "bg-blue-50 ring-1 ring-blue-200" : "hover:bg-slate-50"}`}>
                   <span className="block text-sm font-semibold text-slate-900">{item.nama_cabang}</span>
                   <span className="mt-1 block font-mono text-xs text-slate-500">{item.kode_cabang} {item.singkatan ? `· ${item.singkatan}` : ""}</span>
@@ -233,7 +233,7 @@ export default function BranchEventConfigPage() {
                       </div>
                       <div className="p-4 sm:p-5">
                         <p className="mb-3 text-sm font-semibold text-slate-800">Kolom foto yang ditampilkan</p>
-                        <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                           {config.columns.map((col) => {
                             const field = fields.find((item) => String(item.id) === col.id_jenis_dokumentasi);
                             if (!field) return null;

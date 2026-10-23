@@ -3,6 +3,7 @@
 
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 
 
 
@@ -118,7 +119,7 @@ export default function CabangAdminPage() {
 
     } catch (err) {
 
-      setError(err instanceof Error ? err.message : "Gagal mengambil data cabang.");
+      await Swal.fire({ icon: "error", title: "Gagal memuat cabang", text: err instanceof Error ? err.message : "Gagal mengambil data cabang." });
 
     } finally {
 
@@ -247,8 +248,7 @@ export default function CabangAdminPage() {
 
     if (!form.kode_cabang.trim() || !form.nama_cabang.trim() || !form.singkatan.trim()) {
 
-      setError("Kode cabang, nama cabang, dan singkatan wajib diisi.");
-
+      await Swal.fire({ icon: "warning", title: "Data belum lengkap", text: "Kode cabang, nama cabang, dan singkatan wajib diisi." });
       return;
 
     }
@@ -293,7 +293,7 @@ export default function CabangAdminPage() {
 
 
 
-      setSuccess(result.message || "Data cabang berhasil disimpan.");
+      await Swal.fire({ icon: "success", title: "Cabang tersimpan", text: result.message || "Data cabang berhasil disimpan.", timer: 1600, showConfirmButton: false });
 
       setFormOpen(false);
 
@@ -305,7 +305,7 @@ export default function CabangAdminPage() {
 
     } catch (err) {
 
-      setError(err instanceof Error ? err.message : "Gagal menyimpan cabang.");
+      await Swal.fire({ icon: "error", title: "Gagal menyimpan cabang", text: err instanceof Error ? err.message : "Gagal menyimpan cabang." });
 
     } finally {
 
@@ -321,13 +321,8 @@ export default function CabangAdminPage() {
 
     const kode = String(item.kode_cabang);
 
-    const confirmed = window.confirm(
-
-      `Hapus cabang "${item.nama_cabang}" (${kode})?\n\nPastikan cabang ini tidak masih digunakan oleh data dokumentasi atau event.`,
-
-    );
-
-    if (!confirmed) return;
+    const confirmation = await Swal.fire({ icon: "warning", title: "Hapus cabang?", text: `Hapus cabang "${item.nama_cabang}" (${kode})? Pastikan cabang ini tidak masih digunakan oleh dokumentasi atau event.`, showCancelButton: true, confirmButtonText: "Ya, hapus", cancelButtonText: "Batal", confirmButtonColor: "#dc2626", reverseButtons: true });
+    if (!confirmation.isConfirmed) return;
 
 
 
@@ -357,13 +352,13 @@ export default function CabangAdminPage() {
 
       }
 
-      setSuccess(result.message || "Cabang berhasil dihapus.");
+      await Swal.fire({ icon: "success", title: "Cabang dihapus", text: result.message || "Cabang berhasil dihapus.", timer: 1600, showConfirmButton: false });
 
       await loadCabang();
 
     } catch (err) {
 
-      setError(err instanceof Error ? err.message : "Gagal menghapus cabang.");
+      await Swal.fire({ icon: "error", title: "Gagal menghapus cabang", text: err instanceof Error ? err.message : "Gagal menghapus cabang." });
 
     } finally {
 
@@ -380,10 +375,8 @@ export default function CabangAdminPage() {
 
     if (selectedItems.length === 0) return;
 
-    const confirmed = window.confirm(
-      `Hapus ${selectedItems.length} cabang yang dipilih?\n\nPastikan cabang tersebut tidak masih digunakan oleh data dokumentasi atau event.`,
-    );
-    if (!confirmed) return;
+    const confirmation = await Swal.fire({ icon: "warning", title: `Hapus ${selectedItems.length} cabang?`, text: "Pastikan cabang tersebut tidak masih digunakan oleh dokumentasi atau event.", showCancelButton: true, confirmButtonText: "Ya, hapus semua", cancelButtonText: "Batal", confirmButtonColor: "#dc2626", reverseButtons: true });
+    if (!confirmation.isConfirmed) return;
 
     setError("");
     setSuccess("");
@@ -414,11 +407,9 @@ export default function CabangAdminPage() {
       setSelectedCodes([]);
       await loadCabang();
       if (failedCodes.length > 0) {
-        setError(
-          `${deletedCount} cabang dihapus. ${failedCodes.length} gagal dihapus (kode: ${failedCodes.slice(0, 5).join(", ")}${failedCodes.length > 5 ? ", ..." : ""}).`,
-        );
+        await Swal.fire({ icon: "warning", title: "Hapus massal selesai sebagian", text: `${deletedCount} cabang dihapus. ${failedCodes.length} gagal dihapus (kode: ${failedCodes.slice(0, 5).join(", ")}${failedCodes.length > 5 ? ", ..." : ""}).` });
       } else {
-        setSuccess(`${deletedCount} cabang berhasil dihapus.`);
+        await Swal.fire({ icon: "success", title: "Cabang dihapus", text: `${deletedCount} cabang berhasil dihapus.`, timer: 1600, showConfirmButton: false });
       }
     } finally {
       setBulkDeleting(false);
@@ -447,12 +438,12 @@ export default function CabangAdminPage() {
     setSuccess("");
 
     if (selectedCodes.length === 0) {
-      setError("Pilih minimal satu cabang terlebih dahulu.");
+      await Swal.fire({ icon: "warning", title: "Belum ada cabang", text: "Pilih minimal satu cabang terlebih dahulu." });
       return;
     }
 
     if (!bulkEditDcEnabled && !bulkEditClusterEnabled) {
-      setError("Pilih setidaknya satu field yang ingin diperbarui.");
+      await Swal.fire({ icon: "warning", title: "Pilih data yang diedit", text: "Pilih setidaknya satu field yang ingin diperbarui." });
       return;
     }
 
@@ -466,10 +457,8 @@ export default function CabangAdminPage() {
     ].filter(Boolean).join(" dan ");
 
     const selectedCount = selectedCodes.length;
-    const confirmed = window.confirm(
-      `Terapkan perubahan ${fields} ke ${selectedCount} cabang terpilih?\n\nNilai yang sama akan diterapkan ke semua pilihan. Field yang dicentang tetapi dikosongkan akan dikosongkan di database.`,
-    );
-    if (!confirmed) return;
+    const confirmation = await Swal.fire({ icon: "question", title: "Terapkan perubahan massal?", text: `Terapkan perubahan ${fields} ke ${selectedCount} cabang? Nilai yang sama berlaku untuk semua pilihan. Field yang dicentang tetapi dikosongkan akan dikosongkan di database.`, showCancelButton: true, confirmButtonText: "Terapkan", cancelButtonText: "Batal" });
+    if (!confirmation.isConfirmed) return;
 
     setBulkEditing(true);
     try {
@@ -488,10 +477,10 @@ export default function CabangAdminPage() {
 
       setBulkEditOpen(false);
       setSelectedCodes([]);
-      setSuccess(result.message || `${selectedCount} cabang berhasil diperbarui.`);
+      await Swal.fire({ icon: "success", title: "Perubahan diterapkan", text: result.message || `${selectedCount} cabang berhasil diperbarui.`, timer: 1600, showConfirmButton: false });
       await loadCabang();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal memperbarui cabang terpilih.");
+      await Swal.fire({ icon: "error", title: "Gagal memperbarui cabang", text: err instanceof Error ? err.message : "Gagal memperbarui cabang terpilih." });
     } finally {
       setBulkEditing(false);
     }
@@ -499,7 +488,7 @@ export default function CabangAdminPage() {
 
   return (
 
-    <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-3 sm:p-6 lg:p-8">
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
 
@@ -530,21 +519,13 @@ export default function CabangAdminPage() {
 
 
 
-      {(error || success) && !formOpen && (
 
-        <div className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-
-          {error || success}
-
-        </div>
-
-      )}
 
 
 
       <div className="grid gap-4 sm:grid-cols-3">
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
 
           <div className="flex items-center justify-between">
 
@@ -562,7 +543,7 @@ export default function CabangAdminPage() {
 
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
 
           <div className="flex items-center justify-between">
 
@@ -580,7 +561,7 @@ export default function CabangAdminPage() {
 
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
 
           <div className="flex items-center justify-between">
 
@@ -606,7 +587,7 @@ export default function CabangAdminPage() {
 
 
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
 
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
 
@@ -658,11 +639,7 @@ export default function CabangAdminPage() {
           </div>
         )}
 
-        {error && !formOpen && (
 
-          <div className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>
-
-        )}
 
 
 
@@ -835,7 +812,7 @@ export default function CabangAdminPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5 sm:px-6">
 
-              {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+
 
               <div className="grid gap-4 sm:grid-cols-2">
 
@@ -923,9 +900,7 @@ export default function CabangAdminPage() {
             </div>
 
             <form onSubmit={handleBulkEdit} className="space-y-5 px-5 py-5 sm:px-6">
-              {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{error}</div>
-              )}
+
 
               <div className="rounded-lg border border-slate-200 p-4">
                 <label className="flex cursor-pointer items-start gap-3">

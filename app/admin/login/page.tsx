@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Swal from "sweetalert2";
 
 function MailIcon() {
   return (
@@ -32,7 +33,7 @@ export default function AdminLoginPage() {
     setError("");
 
     if (!email.trim() || !password) {
-      setError("Email dan password wajib diisi.");
+      await Swal.fire({ icon: "warning", title: "Data login belum lengkap", text: "Email dan password wajib diisi." });
       return;
     }
 
@@ -59,7 +60,9 @@ export default function AdminLoginPage() {
 
       window.location.replace("/admin");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menghubungi server.");
+      const message = err instanceof Error ? err.message : "Gagal menghubungi server.";
+      setError(message);
+      await Swal.fire({ icon: "error", title: "Login gagal", text: message });
       setLoading(false);
     }
   }
@@ -84,12 +87,6 @@ export default function AdminLoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6 sm:px-8">
-          {error && (
-            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
           <div>
             <label htmlFor="admin-email" className="mb-2 block text-sm font-medium text-slate-700">Email</label>
             <div className="relative">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 
 type EventItem = {
   id: string | number;
@@ -62,7 +63,7 @@ export default function EventAdminPage() {
       if (!response.ok) throw new Error(result.message || "Gagal mengambil data event.");
       setEventList(Array.isArray(result.data) ? result.data : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengambil data event.");
+      await Swal.fire({ icon: "error", title: "Gagal memuat event", text: err instanceof Error ? err.message : "Gagal mengambil data event." });
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ export default function EventAdminPage() {
     const nama = form.nama_event.trim();
     const kode = slugify(form.kode_event);
     if (!nama || !kode) {
-      setError("Nama event dan kode event wajib diisi.");
+      await Swal.fire({ icon: "warning", title: "Data belum lengkap", text: "Nama event dan kode event wajib diisi." });
       return;
     }
 
@@ -133,24 +134,22 @@ export default function EventAdminPage() {
       });
       const result = await readResponse(response);
       if (!response.ok) throw new Error(result.message || "Gagal menyimpan event.");
-      setSuccess(result.message || "Event berhasil disimpan.");
+      await Swal.fire({ icon: "success", title: "Event tersimpan", text: result.message || "Event berhasil disimpan.", timer: 1600, showConfirmButton: false });
       setFormOpen(false);
       setEditingKode(null);
       setForm(emptyForm);
       setCodeTouched(false);
       await loadEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menyimpan event.");
+      await Swal.fire({ icon: "error", title: "Gagal menyimpan event", text: err instanceof Error ? err.message : "Gagal menyimpan event." });
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(item: EventItem) {
-    const confirmed = window.confirm(
-      `Hapus event "${item.nama_event}" (${item.kode_event})?\n\nPastikan tidak ada dokumentasi yang masih membutuhkan event ini.`
-    );
-    if (!confirmed) return;
+    const confirmation = await Swal.fire({ icon: "warning", title: "Hapus event?", text: `Hapus event "${item.nama_event}" (${item.kode_event})? Pastikan tidak ada dokumentasi yang masih membutuhkannya.`, showCancelButton: true, confirmButtonText: "Ya, hapus", cancelButtonText: "Batal", confirmButtonColor: "#dc2626", reverseButtons: true });
+    if (!confirmation.isConfirmed) return;
 
     setError("");
     setSuccess("");
@@ -163,17 +162,17 @@ export default function EventAdminPage() {
       });
       const result = await readResponse(response);
       if (!response.ok) throw new Error(result.message || "Gagal menghapus event.");
-      setSuccess(result.message || "Event berhasil dihapus.");
+      await Swal.fire({ icon: "success", title: "Event dihapus", text: result.message || "Event berhasil dihapus.", timer: 1600, showConfirmButton: false });
       await loadEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menghapus event.");
+      await Swal.fire({ icon: "error", title: "Gagal menghapus event", text: err instanceof Error ? err.message : "Gagal menghapus event." });
     } finally {
       setDeletingKode(null);
     }
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-3 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Data Event</h1>
@@ -185,13 +184,9 @@ export default function EventAdminPage() {
         </button>
       </div>
 
-      {(error || success) && !formOpen && (
-        <div className={`rounded-lg border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-          {error || success}
-        </div>
-      )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <p className="text-sm font-medium text-slate-500">Total Event</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{loading ? "—" : eventList.length.toLocaleString("id-ID")}</p>
@@ -204,7 +199,7 @@ export default function EventAdminPage() {
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div>
             <h2 className="font-semibold text-slate-900">Daftar Event</h2>
@@ -216,7 +211,7 @@ export default function EventAdminPage() {
           </div>
         </div>
 
-        {error && !formOpen && <div className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>}
+
 
         <div className="overflow-x-auto">
           <table className="w-full min-w-[650px] text-left text-sm">
@@ -268,7 +263,7 @@ export default function EventAdminPage() {
               <button type="button" onClick={closeForm} disabled={saving} aria-label="Tutup form" className="rounded-lg px-2 py-1 text-2xl leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
             </div>
             <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5 sm:px-6">
-              {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+
               <div>
                 <label htmlFor="nama_event" className="mb-1.5 block text-sm font-medium text-slate-700">Nama Event *</label>
                 <input id="nama_event" value={form.nama_event} onChange={(event) => setForm((current) => ({ ...current, nama_event: event.target.value, kode_event: codeTouched ? current.kode_event : slugify(event.target.value) }))} required className={inputClass} placeholder="Contoh: Milkypedia" />

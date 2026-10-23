@@ -7,6 +7,14 @@ function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function sanitizeToken(value: string) {
+  return value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+/**
+ * New ID format: <branch>_<YYYYMMDD>_<event>_<photo-field>[_001].
+ * Historic IDs are never rewritten. The field code appears exactly once.
+ */
 export async function generateDocumentId(
   db: Pool,
   tableName: string,
@@ -16,21 +24,22 @@ export async function generateDocumentId(
   kodeKolom = "",
 ) {
   const date = tanggal.replaceAll("-", "");
-  // Include the field code in the namespace so several photos in the same event
-  // and branch get unique primary keys while remaining recognizable in legacy reports.
-  const baseId = [kodeCabang, date, kodeEvent, kodeKolom].filter(Boolean).join("_");
+  const branch = sanitizeToken(kodeCabang);
+  const event = sanitizeToken(kodeEvent);
+  const field = sanitizeToken(kodeKolom);
+  if (!/^\d{8}$/.test(date) || !branch || !event) throw new Error("Komponen ID dokumentasi tidak valid.");
+  const baseId = [branch, date, event, field].filter(Boolean).join("_");
   const [rows] = await db.query<DocumentIdRow[]>(
     `SELECT id FROM \`${tableName}\` WHERE id = ? OR id LIKE ?`,
     [baseId, `${baseId}_%`],
   );
-  if (rows.length === 0) return baseId;
-  const regex = new RegExp(`^${escapeRegExp(baseId)}_(\\d+)$`);
   let maxSequence = 0;
+  const exactSequence = new RegExp(`^${escapeRegExp(baseId)}_(\\d+)$`);
   for (const row of rows) {
-    const match = row.id.match(regex);
+    const match = row.id.match(exactSequence);
     if (!match) continue;
     const sequence = Number(match[1]);
-    if (sequence > maxSequence) maxSequence = sequence;
+    if (Number.isSafeInteger(sequence) && sequence > maxSequence) maxSequence = sequence;
   }
-  return `${baseId}_${String(maxSequence + 1).padStart(3, "0")}`;
+  return rows.length === 0 ? baseId : `${baseId}_${String(maxSequence + 1).padStart(3, "0")}`;
 }

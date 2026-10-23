@@ -19,6 +19,7 @@ import {
 import { Camera } from "react-feather";
 
 import imageCompression from "browser-image-compression";
+import Swal from "sweetalert2";
 
 
 
@@ -190,10 +191,8 @@ export default function FormPage() {
 
     useState("");
 
-  const [alertDialog, setAlertDialog] = useState<{ title: string; text: string; icon: "warning" | "error" } | null>(null);
-
   function showAlert(title: string, text: string, icon: "warning" | "error" = "warning") {
-    setAlertDialog({ title, text, icon });
+    void Swal.fire({ icon, title, text, confirmButtonText: "Mengerti" });
   }
 
 
@@ -251,7 +250,7 @@ export default function FormPage() {
             setEvents([]);
             return;
           }
-          setError(result.message || "Gagal mengambil daftar event.");
+          void Swal.fire({ icon: "error", title: "Gagal memuat event", text: result.message || "Gagal mengambil daftar event." });
           return;
         }
 
@@ -288,11 +287,7 @@ export default function FormPage() {
 
 
 
-        setError(
-
-          "Gagal mengambil daftar event."
-
-        );
+        void Swal.fire({ icon: "error", title: "Gagal memuat event", text: "Gagal mengambil daftar event." });
 
       } finally {
 
@@ -408,14 +403,7 @@ export default function FormPage() {
 
 
     setEvents([]);
-
-
-
-    setError("");
-
-    setMessage("");
-
-  }
+}
 
 
 
@@ -456,12 +444,7 @@ export default function FormPage() {
       resetFormSetelahCabang();
 
     } else {
-
-      setError("");
-
-      setMessage("");
-
-    }
+}
 
   }
 
@@ -478,14 +461,7 @@ export default function FormPage() {
    */
 
   async function cekCabang() {
-
-    setError("");
-
-    setMessage("");
-
-
-
-    /*
+/*
 
      * Sebelum request baru,
 
@@ -507,11 +483,7 @@ export default function FormPage() {
 
     if (!kode) {
 
-      setError(
-
-        "Masukkan kode cabang."
-
-      );
+      void Swal.fire({ icon: "warning", title: "Masukkan kode cabang", text: "Kode cabang harus diisi terlebih dahulu." });
 
 
 
@@ -551,13 +523,13 @@ export default function FormPage() {
         if (response.status === 404 && result.code === "BRANCH_NOT_FOUND") {
           showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
         } else {
-          setError(result.message || "Gagal memeriksa cabang.");
+          void Swal.fire({ icon: "error", title: "Gagal memeriksa cabang", text: result.message || "Gagal memeriksa cabang." });
         }
         return;
       }
 
       if (!result.success) {
-        setError(result.message || "Gagal memeriksa cabang.");
+        void Swal.fire({ icon: "error", title: "Gagal memeriksa cabang", text: result.message || "Gagal memeriksa cabang." });
         return;
       }
 
@@ -588,11 +560,7 @@ export default function FormPage() {
 
 
 
-      setError(
-
-        "Gagal menghubungi server."
-
-      );
+      void Swal.fire({ icon: "error", title: "Server tidak dapat dihubungi", text: "Gagal menghubungi server." });
 
     } finally {
 
@@ -645,14 +613,7 @@ export default function FormPage() {
     setEventSearch("");
 
     setEventOpen(false);
-
-
-
-    setError("");
-
-    setMessage("");
-
-  }
+}
 
 
 
@@ -671,11 +632,8 @@ export default function FormPage() {
     e: React.ChangeEvent<HTMLInputElement>
 
   ) {
-
-    setError("");
-    setMessage("");
-    if (!selectedFieldCode) {
-      setError("Pilih jenis dokumentasi terlebih dahulu.");
+if (!selectedFieldCode) {
+      void Swal.fire({ icon: "warning", title: "Pilih jenis dokumentasi", text: "Pilih jenis dokumentasi terlebih dahulu." });
       e.target.value = "";
       return;
     }
@@ -782,25 +740,13 @@ export default function FormPage() {
 
       const total = fotos.length + compressedFiles.length;
 
-      setMessage(
-
-        `${compressedFiles.length} foto siap diupload. Total foto: ${total}. Maksimal 2 MB per foto.`
-
-      );
+      void Swal.fire({ icon: "success", title: "Foto siap diupload", text: `${compressedFiles.length} foto siap diupload. Total foto: ${total}. Maksimal 2 MB per foto.`, timer: 1800, showConfirmButton: false });
 
     } catch (error) {
 
       console.error("COMPRESSION ERROR:", error);
 
-      setError(
-
-        error instanceof Error
-
-          ? error.message
-
-          : "Gagal mengompres foto."
-
-      );
+      void Swal.fire({ icon: "error", title: "Gagal memproses foto", text: error instanceof Error ? error.message : "Gagal mengompres foto." });
 
     } finally {
 
@@ -835,19 +781,16 @@ export default function FormPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
-    setMessage("");
-
-    if (!cabang) {
-      setError("Cabang belum dipilih.");
+if (!cabang) {
+      void Swal.fire({ icon: "warning", title: "Cabang belum dipilih", text: "Periksa kode cabang terlebih dahulu." });
       return;
     }
     if (!selectedEvent) {
-      setError("Pilih event yang tersedia untuk cabang ini.");
+      void Swal.fire({ icon: "warning", title: "Pilih event", text: "Pilih event yang tersedia untuk cabang ini." });
       return;
     }
     if (!tanggal) {
-      setError("Tanggal wajib diisi.");
+      void Swal.fire({ icon: "warning", title: "Tanggal wajib diisi", text: "Pilih tanggal dokumentasi terlebih dahulu." });
       return;
     }
 
@@ -855,7 +798,7 @@ export default function FormPage() {
       field.wajib && !(fieldPhotos[field.kode_kolom] || []).length
     );
     if (missingRequired) {
-      setError(`Foto ${missingRequired.nama_kolom} wajib diupload.`);
+      void Swal.fire({ icon: "warning", title: "Foto wajib diupload", text: `Foto ${missingRequired.nama_kolom} wajib diupload.` });
       return;
     }
 
@@ -863,12 +806,12 @@ export default function FormPage() {
       (fieldPhotos[field.kode_kolom] || []).map((foto) => ({ foto, field }))
     );
     if (uploadQueue.length === 0) {
-      setError("Pilih minimal satu foto pada kolom dokumentasi yang tersedia.");
+      void Swal.fire({ icon: "warning", title: "Belum ada foto", text: "Pilih minimal satu foto pada kolom dokumentasi yang tersedia." });
       return;
     }
     const tooLarge = uploadQueue.find((item) => item.foto.size > 2 * 1024 * 1024);
     if (tooLarge) {
-      setError(`Foto "${tooLarge.foto.name}" melebihi 2 MB.`);
+      void Swal.fire({ icon: "warning", title: "Ukuran foto terlalu besar", text: `Foto "${tooLarge.foto.name}" melebihi 2 MB.` });
       return;
     }
 
@@ -898,7 +841,7 @@ export default function FormPage() {
         if (result.data?.id !== undefined) savedIds.push(result.data.id);
       }
 
-      setMessage(`Berhasil menyimpan ${uploadQueue.length} foto dokumentasi${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`);
+      await Swal.fire({ icon: "success", title: "Dokumentasi berhasil disimpan", text: `${uploadQueue.length} foto tersimpan${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`, confirmButtonText: "Selesai" });
       Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
       setFotos([]);
       setFieldPhotos({});
@@ -914,7 +857,7 @@ export default function FormPage() {
       if (galleryInput) galleryInput.value = "";
     } catch (error) {
       console.error("UPLOAD ERROR:", error);
-      setError(error instanceof Error ? error.message : "Terjadi kesalahan saat mengirim data.");
+      await Swal.fire({ icon: "error", title: "Upload gagal", text: error instanceof Error ? error.message : "Terjadi kesalahan saat mengirim data." });
     } finally {
       setLoadingSubmit(false);
     }
@@ -971,23 +914,6 @@ export default function FormPage() {
   return (
 
     <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
-      {alertDialog && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAlertDialog(null); }}>
-        <section role="alertdialog" aria-modal="true" aria-labelledby="branch-alert-title" aria-describedby="branch-alert-description" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
-          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${alertDialog.icon === "error" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
-            <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              {alertDialog.icon === "error" ? <><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></> : <><path d="M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 3h.01"/></>}
-            </svg>
-          </div>
-          <h2 id="branch-alert-title" className="mt-4 text-xl font-semibold text-slate-900">{alertDialog.title}</h2>
-          <p id="branch-alert-description" className="mt-2 text-sm leading-6 text-slate-600">{alertDialog.text}</p>
-          <button type="button" autoFocus onClick={() => setAlertDialog(null)} className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">Mengerti</button>
-        </section>
-      </div>
-    )}
-
-
-
       <div className="mx-auto max-w-xl">
 
         {/* =================================================
@@ -1034,37 +960,13 @@ export default function FormPage() {
 
         ================================================= */}
 
-        {error && (
-
-          <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
-
-            {error}
-
-          </div>
-
-        )}
-
-
-
-        {/* =================================================
+{/* =================================================
 
             SUCCESS
 
         ================================================= */}
 
-        {message && (
-
-          <div className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
-
-            {message}
-
-          </div>
-
-        )}
-
-
-
-        {/* =================================================
+{/* =================================================
 
             FORM
 
@@ -1479,14 +1381,7 @@ export default function FormPage() {
                           );
 
                         }
-
-
-
-                        setError("");
-
-                        setMessage("");
-
-                      }}
+}}
 
                       onKeyDown={(e) => {
 
@@ -1541,16 +1436,7 @@ export default function FormPage() {
                               ""
 
                             );
-
-
-
-                            setError(
-
-                              ""
-
-                            );
-
-                          }}
+}}
 
                           className="mr-1 rounded-lg px-2 py-1 text-lg leading-none text-slate-400 transition hover:bg-slate-100 hover:text-red-500"
 
