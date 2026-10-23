@@ -395,7 +395,9 @@ export default function FormPage() {
   function resetFormSetelahCabang() {
 
     setSelectedEvent(null);
-
+    setSelectedFieldCode("");
+    setFieldPhotos({});
+    setFieldPreviews({});
     setEventSearch("");
 
     setEventOpen(false);
