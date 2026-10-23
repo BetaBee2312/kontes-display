@@ -172,7 +172,7 @@ export default function EventAdminPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-6 lg:p-8">
+    <div className="mx-auto w-full max-w-7xl min-w-0 space-y-5 p-3 sm:p-6 lg:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Data Event</h1>
@@ -190,7 +190,7 @@ export default function EventAdminPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
           <p className="text-sm font-medium text-slate-500">Total Event</p>
           <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">{loading ? "—" : eventList.length.toLocaleString("id-ID")}</p>
@@ -203,7 +203,7 @@ export default function EventAdminPage() {
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <div>
             <h2 className="font-semibold text-slate-900">Daftar Event</h2>
