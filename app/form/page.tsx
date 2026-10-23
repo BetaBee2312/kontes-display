@@ -543,13 +543,7 @@ export default function FormPage() {
 
       if (!response.ok) {
         if (response.status === 404 && result.code === "BRANCH_NOT_FOUND") {
-          await Swal.fire({
-            icon: "error",
-            title: "Cabang Tidak Terdaftar",
-            text: result.message || "Kode cabang tidak ditemukan. Periksa kembali kode cabang.",
-            confirmButtonText: "Mengerti",
-            confirmButtonColor: "#2563eb",
-          });
+          window.alert("Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
         } else {
           setError(result.message || "Gagal memeriksa cabang.");
         }
