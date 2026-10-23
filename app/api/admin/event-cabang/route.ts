@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest) {
     const fieldIds = assignments.flatMap((assignment) =>
       (Array.isArray(assignment.columns) ? assignment.columns : []).map((field) => Number(field.id_jenis_dokumentasi))
     );
-    const [knownFields] = await connection.query(`SELECT id FROM tb_jenis_dokumentasi WHERE aktif = 1`);
+    const [knownFields] = await connection.query(`SELECT id FROM tb_jenis_dokumentasi`);
     const knownFieldIds = new Set((knownFields as Array<{ id: number | string }>).map((item) => Number(item.id)));
     if (fieldIds.some((id) => !knownFieldIds.has(id))) {
       await connection.rollback();
