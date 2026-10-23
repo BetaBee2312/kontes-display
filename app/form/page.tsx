@@ -555,37 +555,23 @@ export default function FormPage() {
 
 
       if (!response.ok) {
-
-        setError(
-
-          result.message ||
-
-            "Cabang tidak ditemukan."
-
-        );
-
-
-
+        if (response.status === 404 && result.code === "BRANCH_NOT_FOUND") {
+          await Swal.fire({
+            icon: "error",
+            title: "Cabang Tidak Terdaftar",
+            text: result.message || "Kode cabang tidak ditemukan. Periksa kembali kode cabang.",
+            confirmButtonText: "Mengerti",
+            confirmButtonColor: "#2563eb",
+          });
+        } else {
+          setError(result.message || "Gagal memeriksa cabang.");
+        }
         return;
-
       }
 
-
-
       if (!result.success) {
-
-        setError(
-
-          result.message ||
-
-            "Cabang tidak ditemukan."
-
-        );
-
-
-
+        setError(result.message || "Gagal memeriksa cabang.");
         return;
-
       }
 
 
