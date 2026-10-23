@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 type Branch = { kode_cabang: string | number; nama_cabang: string; singkatan?: string };
 type EventItem = { id: number | string; kode_event: string; nama_event: string; aktif?: number | boolean };
 type ExistingAssignment = { id_event: number | string; kode_cabang: string | number; aktif: number | boolean };
-type Config = { id_event: string; aktif: boolean };
+type Config = { id_event: string; aktif: boolean; mixed?: boolean; enabledCount?: number };
 
 function isOn(value: number | boolean | string | undefined) {
   return value === true || Number(value) === 1;
@@ -55,8 +55,21 @@ export default function BranchEventConfigPage() {
 
   const configs = useMemo(() => {
     if (selectedBranches.length === 1) return configsByBranch[selectedBranches[0]] || [];
-    return [];
-  }, [configsByBranch, selectedBranches]);
+    if (selectedBranches.length === 0) return [];
+
+    return events.map((event) => {
+      const activeCount = selectedBranches.reduce((count, branchCode) => {
+        const branchConfig = configsByBranch[branchCode]?.find((item) => item.id_event === String(event.id));
+        return count + (branchConfig?.aktif ? 1 : 0);
+      }, 0);
+      return {
+        id_event: String(event.id),
+        aktif: activeCount === selectedBranches.length,
+        mixed: activeCount > 0 && activeCount < selectedBranches.length,
+        enabledCount: activeCount,
+      };
+    });
+  }, [configsByBranch, selectedBranches, events]);
 
   useEffect(() => {
     if (selectedBranches.length === 0) {
@@ -79,14 +92,15 @@ export default function BranchEventConfigPage() {
   }, [selectedBranches, events, assignments]);
 
   function updateEvent(eventId: string, active: boolean) {
-    if (selectedBranches.length !== 1) return;
-    const branchCode = selectedBranches[0];
-    setConfigsByBranch((current) => ({
-      ...current,
-      [branchCode]: (current[branchCode] || []).map((item) =>
-        item.id_event === eventId ? { ...item, aktif: active } : item
-      ),
-    }));
+    setConfigsByBranch((current) => {
+      const next = { ...current };
+      for (const branchCode of selectedBranches) {
+        next[branchCode] = (current[branchCode] || []).map((item) =>
+          item.id_event === eventId ? { id_event: item.id_event, aktif: active } : item
+        );
+      }
+      return next;
+    });
   }
 
   async function save() {
@@ -94,26 +108,47 @@ export default function BranchEventConfigPage() {
       await Swal.fire({ icon: "warning", title: "Pilih cabang", text: "Pilih minimal satu cabang terlebih dahulu." });
       return;
     }
-    if (selectedBranches.length > 1) {
-      await Swal.fire({
-        icon: "info",
-        title: "Pilih satu cabang untuk diedit",
-        text: "Mode multi-select digunakan untuk memilih cabang dengan cepat. Pengeditan dan penyimpanan dilakukan per cabang agar konfigurasi tidak tertukar.",
+
+    const targets = selectedBranches.map((kode_cabang) => ({
+      kode_cabang,
+      assignments: configsByBranch[kode_cabang] || events.map((event) => ({
+        id_event: String(event.id),
+        aktif: isOn(assignments.find((item) =>
+          String(item.kode_cabang) === kode_cabang && Number(item.id_event) === Number(event.id)
+        )?.aktif),
+      })),
+    }));
+
+    if (targets.length > 1) {
+      const confirmation = await Swal.fire({
+        icon: "question",
+        title: `Terapkan konfigurasi ke ${targets.length} cabang?`,
+        text: "Event yang kamu ubah akan disamakan ke semua cabang terpilih. Event dengan status campuran yang tidak diubah tetap mempertahankan status masing-masing cabang.",
+        showCancelButton: true,
+        confirmButtonText: `Simpan ke ${targets.length} cabang`,
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#2563eb",
       });
-      return;
+      if (!confirmation.isConfirmed) return;
     }
 
     setSaving(true);
-    const branchCode = selectedBranches[0];
     try {
       const response = await fetch("/api/admin/event-cabang", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kode_cabang: branchCode, assignments: configsByBranch[branchCode] || [] }),
+        body: JSON.stringify({ branches: targets }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan konfigurasi.");
-      await Swal.fire({ icon: "success", title: "Konfigurasi tersimpan", text: result.message || "Konfigurasi berhasil disimpan.", timer: 1700, showConfirmButton: false });
+      await Swal.fire({
+        icon: "success",
+        title: "Konfigurasi tersimpan",
+        text: result.message || `Konfigurasi berhasil disimpan ke ${targets.length} cabang.`,
+        timer: 1800,
+        showConfirmButton: false,
+      });
+      await load();
     } catch (e) {
       const message = e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.";
       await Swal.fire({ icon: "error", title: "Gagal menyimpan konfigurasi", text: message });
@@ -177,69 +212,76 @@ export default function BranchEventConfigPage() {
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
               <p className="text-sm text-slate-600"><span className="font-semibold text-slate-900">{selectedBranches.length}</span> cabang dipilih</p>
-              {selectedBranches.length > 1 && <p className="text-xs text-amber-700">Pilih satu cabang untuk mengubah dan menyimpan akses eventnya.</p>}
+              {selectedBranches.length > 1 && <p className="text-xs text-blue-700">Mode bulk aktif: perubahan event akan diterapkan ke semua cabang terpilih.</p>}
             </div>
           </section>
 
           {selectedBranchInfos.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
               <h2 className="font-semibold text-slate-800">Belum ada cabang dipilih</h2>
-              <p className="mt-1 text-sm text-slate-500">Pilih cabang melalui dropdown di atas untuk melihat konfigurasi event.</p>
+              <p className="mt-1 text-sm text-slate-500">Pilih satu atau beberapa cabang di dropdown untuk mengatur akses event.</p>
             </div>
-          ) : selectedBranchInfos.length > 1 ? (
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="font-semibold text-slate-900">Cabang yang dipilih</h2>
-                  <p className="mt-1 text-sm text-slate-500">Pilih satu nama untuk mengedit akses event. Multi-select memudahkan pemilihan banyak cabang tanpa daftar panjang.</p>
-                </div>
-                <span className="text-xs font-medium text-slate-500">{selectedBranchInfos.length} cabang</span>
-              </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                {selectedBranchInfos.map((branch) => (
-                  <button key={String(branch.kode_cabang)} type="button" onClick={() => setSelectedBranches([String(branch.kode_cabang)])}
-                    className="rounded-lg border border-slate-200 p-3 text-left transition hover:border-blue-300 hover:bg-blue-50">
-                    <span className="block text-sm font-semibold text-slate-900">{branch.nama_cabang}</span>
-                    <span className="mt-1 block font-mono text-xs text-slate-500">{branch.kode_cabang}{branch.singkatan ? ` · ${branch.singkatan}` : ""}</span>
-                    <span className="mt-2 block text-xs font-semibold text-blue-600">Klik untuk mengatur event →</span>
-                  </button>
-                ))}
-              </div>
-            </section>
           ) : (
             <>
               <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">Konfigurasi untuk</p>
-                  <h2 className="mt-1 text-lg font-semibold text-slate-900">{selectedBranchInfos[0].nama_cabang}</h2>
-                  <p className="mt-1 font-mono text-xs text-slate-500">Kode {selectedBranches[0]}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-600">
+                    {selectedBranches.length > 1 ? `Bulk konfigurasi · ${selectedBranches.length} cabang` : "Konfigurasi untuk"}
+                  </p>
+                  <h2 className="mt-1 text-lg font-semibold text-slate-900">
+                    {selectedBranches.length === 1 ? selectedBranchInfos[0].nama_cabang : `${selectedBranchInfos.length} cabang dipilih`}
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {selectedBranches.length === 1
+                      ? `Kode ${selectedBranches[0]}`
+                      : selectedBranchInfos.slice(0, 4).map((item) => item.nama_cabang).join(", ") + (selectedBranchInfos.length > 4 ? `, dan ${selectedBranchInfos.length - 4} lainnya` : "")}
+                  </p>
                 </div>
                 <button type="button" onClick={() => void save()} disabled={saving}
                   className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-                  {saving ? "Menyimpan..." : "Simpan Konfigurasi"}
+                  {saving ? "Menyimpan..." : selectedBranches.length > 1 ? `Simpan ke ${selectedBranches.length} Cabang` : "Simpan Konfigurasi"}
                 </button>
               </div>
 
               <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="font-semibold text-slate-900">Akses Event untuk Cabang</h3>
-                    <p className="mt-1 text-sm text-slate-500">Pilih event yang bisa digunakan cabang ini. Kolom foto ditetapkan di menu Data Event.</p>
+                    <h3 className="font-semibold text-slate-900">Akses Event {selectedBranches.length > 1 ? "untuk Semua Cabang Terpilih" : "untuk Cabang"}</h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {selectedBranches.length > 1
+                        ? "Centang atau hapus centang event untuk menerapkan status yang sama ke seluruh cabang. Status campuran yang tidak disentuh tidak akan diubah."
+                        : "Pilih event yang bisa digunakan cabang ini. Kolom foto ditetapkan di menu Data Event."}
+                    </p>
                   </div>
-                  <span className="text-xs font-medium text-slate-500">{configs.filter((config) => config.aktif).length} dari {configs.length} aktif</span>
+                  <span className="text-xs font-medium text-slate-500">
+                    {selectedBranches.length > 1
+                      ? `${configs.filter((config) => config.aktif).length} event aktif di semua cabang · ${configs.filter((config) => config.mixed).length} status campuran`
+                      : `${configs.filter((config) => config.aktif).length} dari ${configs.length} aktif`}
+                  </span>
                 </div>
                 <div className="mt-4 space-y-2">
                   {configs.map((config) => {
                     const event = events.find((item) => String(item.id) === config.id_event);
                     if (!event) return null;
+                    const eventLabel = config.mixed
+                      ? `Berbeda antar-cabang (${config.enabledCount}/${selectedBranches.length} aktif)`
+                      : selectedBranches.length > 1
+                        ? config.aktif ? "Diizinkan untuk semua" : "Tidak diizinkan untuk semua"
+                        : config.aktif ? "Diizinkan" : "Tidak diizinkan";
                     return (
-                      <label key={config.id_event} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition ${config.aktif ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
-                        <input type="checkbox" checked={config.aktif} onChange={(event) => updateEvent(config.id_event, event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600" />
+                      <label key={config.id_event} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition ${config.mixed ? "border-amber-200 bg-amber-50/60" : config.aktif ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
+                        <input
+                          type="checkbox"
+                          checked={config.aktif}
+                          ref={(node) => { if (node) node.indeterminate = Boolean(config.mixed); }}
+                          onChange={(event) => updateEvent(config.id_event, event.target.checked)}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                        />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-semibold text-slate-900">{event.nama_event}</span>
                           <span className="mt-1 block font-mono text-xs text-slate-500">{event.kode_event}</span>
                         </span>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${config.aktif ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{config.aktif ? "Diizinkan" : "Tidak diizinkan"}</span>
+                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${config.mixed ? "bg-amber-100 text-amber-800" : config.aktif ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{eventLabel}</span>
                       </label>
                     );
                   })}
@@ -249,7 +291,7 @@ export default function BranchEventConfigPage() {
               <div className="flex justify-end">
                 <button type="button" onClick={() => void save()} disabled={saving}
                   className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
-                  {saving ? "Menyimpan..." : "Simpan Konfigurasi"}
+                  {saving ? "Menyimpan..." : selectedBranches.length > 1 ? `Simpan ke ${selectedBranches.length} Cabang` : "Simpan Konfigurasi"}
                 </button>
               </div>
             </>

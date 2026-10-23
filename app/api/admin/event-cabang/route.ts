@@ -194,59 +194,119 @@ export async function PUT(request: NextRequest) {
     const body = await request.json() as {
       kode_cabang?: unknown;
       assignments?: Array<{ id_event?: unknown; aktif?: unknown }>;
+      branches?: Array<{
+        kode_cabang?: unknown;
+        assignments?: Array<{ id_event?: unknown; aktif?: unknown }>;
+      }>;
     };
-    const kodeCabang = clean(body.kode_cabang);
-    const assignments = Array.isArray(body.assignments) ? body.assignments : [];
-    if (!/^\d+$/.test(kodeCabang)) {
-      return NextResponse.json({ success: false, message: "Kode cabang tidak valid." }, { status: 400 });
+
+    // Backward-compatible single-branch payload, plus atomic multi-branch payload.
+    const rawTargets = Array.isArray(body.branches)
+      ? body.branches
+      : [{ kode_cabang: body.kode_cabang, assignments: body.assignments }];
+    if (rawTargets.length === 0 || rawTargets.length > 500) {
+      return NextResponse.json({ success: false, message: "Pilih antara 1 sampai 500 cabang." }, { status: 400 });
     }
-    const eventIds = assignments.map((item) => Number(item.id_event));
-    if (eventIds.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(eventIds).size !== eventIds.length) {
-      return NextResponse.json({ success: false, message: "Daftar event tidak valid atau duplikat." }, { status: 400 });
+
+    const targets = rawTargets.map((target) => ({
+      kode_cabang: clean(target.kode_cabang),
+      assignments: Array.isArray(target.assignments) ? target.assignments : [],
+    }));
+    const branchCodes = targets.map((target) => target.kode_cabang);
+
+    if (branchCodes.some((code) => !/^\d+$/.test(code)) || new Set(branchCodes).size !== branchCodes.length) {
+      return NextResponse.json({ success: false, message: "Kode cabang tidak valid atau ada cabang yang duplikat." }, { status: 400 });
+    }
+
+    const targetsWithIds = targets.map((target) => {
+      const eventIds = target.assignments.map((item) => Number(item.id_event));
+      return { ...target, eventIds };
+    });
+    if (targetsWithIds.some((target) =>
+      target.eventIds.some((id) => !Number.isSafeInteger(id) || id <= 0) ||
+      new Set(target.eventIds).size !== target.eventIds.length
+    )) {
+      return NextResponse.json({ success: false, message: "Daftar event tidak valid atau berisi duplikat." }, { status: 400 });
     }
 
     connection = await db.getConnection();
     await connection.beginTransaction();
+
+    const branchPlaceholders = branchCodes.map(() => "?").join(", ");
     const [branchRows] = await connection.execute(
-      `SELECT kode_cabang FROM tb_cabang WHERE kode_cabang = ? LIMIT 1 FOR UPDATE`,
-      [kodeCabang],
+      `SELECT kode_cabang FROM tb_cabang WHERE kode_cabang IN (${branchPlaceholders}) FOR UPDATE`,
+      branchCodes,
     );
-    if (!Array.isArray(branchRows) || branchRows.length === 0) {
+    const existingBranchCodes = new Set(
+      (branchRows as Array<{ kode_cabang: string | number }>).map((row) => String(row.kode_cabang))
+    );
+    const missingCodes = branchCodes.filter((code) => !existingBranchCodes.has(code));
+    if (missingCodes.length > 0) {
       await connection.rollback();
-      return NextResponse.json({ success: false, message: "Cabang tidak ditemukan." }, { status: 404 });
+      return NextResponse.json({
+        success: false,
+        message: `Cabang tidak ditemukan: ${missingCodes.slice(0, 5).join(", ")}${missingCodes.length > 5 ? " dan lainnya" : ""}.`,
+      }, { status: 404 });
     }
+
     const [knownEvents] = await connection.query(`SELECT id FROM tb_event`);
     const validEventIds = new Set((knownEvents as Array<{ id: number | string }>).map((item) => Number(item.id)));
-    if (eventIds.some((id) => !validEventIds.has(id))) {
+    if (targetsWithIds.some((target) => target.eventIds.some((id) => !validEventIds.has(id)))) {
       await connection.rollback();
       return NextResponse.json({ success: false, message: "Terdapat event yang tidak terdaftar." }, { status: 400 });
     }
 
-    const submittedIds = new Set(eventIds);
-    const [existingAssignments] = await connection.execute(
-      `SELECT id_event FROM tb_event_cabang WHERE kode_cabang = ?`,
-      [kodeCabang],
-    );
-    for (const row of existingAssignments as Array<{ id_event: number | string }>) {
-      if (!submittedIds.has(Number(row.id_event))) {
+    // Disable stale assignments omitted from each submitted branch configuration.
+    for (const target of targetsWithIds) {
+      if (target.eventIds.length === 0) {
         await connection.execute(
-          `UPDATE tb_event_cabang SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
-          [kodeCabang, Number(row.id_event)],
+          `UPDATE tb_event_cabang SET aktif = 0 WHERE kode_cabang = ?`,
+          [target.kode_cabang],
+        );
+      } else {
+        const eventPlaceholders = target.eventIds.map(() => "?").join(", ");
+        await connection.execute(
+          `UPDATE tb_event_cabang SET aktif = 0
+           WHERE kode_cabang = ? AND id_event NOT IN (${eventPlaceholders})`,
+          [target.kode_cabang, ...target.eventIds],
         );
       }
     }
-    for (const assignment of assignments) {
-      const idEvent = Number(assignment.id_event);
-      const active = assignment.aktif === true || Number(assignment.aktif) === 1;
+
+    // Save every selected branch within the same transaction.
+    const rowsToUpsert: Array<string | number> = [];
+    for (const target of targetsWithIds) {
+      for (const assignment of target.assignments) {
+        rowsToUpsert.push(
+          target.kode_cabang,
+          Number(assignment.id_event),
+          assignment.aktif === true || Number(assignment.aktif) === 1 ? 1 : 0,
+        );
+      }
+    }
+
+    const rowCount = rowsToUpsert.length / 3;
+    const chunkSize = 300;
+    for (let offset = 0; offset < rowCount; offset += chunkSize) {
+      const count = Math.min(chunkSize, rowCount - offset);
+      const chunkValues = rowsToUpsert.slice(offset * 3, (offset + count) * 3);
+      const valuePlaceholders = Array.from({ length: count }, () => "(?, ?, ?)").join(", ");
       await connection.execute(
         `INSERT INTO tb_event_cabang (kode_cabang, id_event, aktif)
-         VALUES (?, ?, ?)
+         VALUES ${valuePlaceholders}
          ON DUPLICATE KEY UPDATE aktif = VALUES(aktif)`,
-        [kodeCabang, idEvent, active ? 1 : 0],
+        chunkValues,
       );
     }
+
     await connection.commit();
-    return NextResponse.json({ success: true, message: "Akses event cabang berhasil disimpan." });
+    return NextResponse.json({
+      success: true,
+      message: targets.length === 1
+        ? "Akses event cabang berhasil disimpan."
+        : `Akses event berhasil disimpan untuk ${targets.length} cabang.`,
+      affectedBranches: targets.length,
+    });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => undefined);
     return databaseError(error, "Gagal menyimpan akses event cabang.");
