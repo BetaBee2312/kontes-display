@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
 
 type Mode = "month" | "day" | "event" | "branch" | "branch_event";
 
@@ -134,7 +135,7 @@ export default function RekapAdminPage() {
         setLastLoaded(new Date().toLocaleString("id-ID"));
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Gagal memuat rekap.");
+          await Swal.fire({ icon: "error", title: "Gagal memuat rekap", text: err instanceof Error ? err.message : "Gagal memuat rekap." });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -162,7 +163,7 @@ export default function RekapAdminPage() {
     event.preventDefault();
     setError("");
     if (dateFrom && dateTo && dateFrom > dateTo) {
-      setError("Tanggal mulai tidak boleh melewati tanggal akhir.");
+      await Swal.fire({ icon: "warning", title: "Rentang tanggal tidak valid", text: "Tanggal mulai tidak boleh melewati tanggal akhir." });
       return;
     }
 
@@ -183,7 +184,7 @@ export default function RekapAdminPage() {
       setEvents(result.options?.events || []);
       setLastLoaded(new Date().toLocaleString("id-ID"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengambil rekap.");
+      await Swal.fire({ icon: "error", title: "Gagal mengambil rekap", text: err instanceof Error ? err.message : "Gagal mengambil rekap." });
     } finally {
       setLoading(false);
     }
