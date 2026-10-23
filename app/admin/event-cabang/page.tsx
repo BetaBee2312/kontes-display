@@ -99,6 +99,103 @@ export default function BranchEventConfigPage() {
     }));
   }
 
+
+  async function refreshConfig() {
+    const response = await fetch("/api/admin/event-cabang", { cache: "no-store" });
+    const result = await response.json();
+    if (!response.ok || !result.success) throw new Error(result.message || "Gagal memuat ulang data.");
+    setBranches(result.data.cabang || []);
+    setEvents(result.data.events || []);
+    setFields(result.data.fields || []);
+    setAssignments(result.data.assignments || []);
+    setFieldAssignments(result.data.fieldAssignments || []);
+  }
+
+  function makeFieldCode(value: string) {
+    return value.toLowerCase().trim().normalize("NFKD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 50);
+  }
+
+  const normalizedFieldName = fieldNameDraft.trim().toLowerCase();
+  const draftCode = makeFieldCode(fieldNameDraft);
+  const duplicateField = fields.find((field) =>
+    field.kode_kolom.toLowerCase() === draftCode ||
+    field.nama_kolom.trim().toLowerCase() === normalizedFieldName
+  );
+
+  async function addField() {
+    const name = fieldNameDraft.trim();
+    const code = makeFieldCode(name);
+    if (!name || !code) {
+      await Swal.fire({ icon: "warning", title: "Nama kolom tidak valid", text: "Masukkan nama yang terdiri dari huruf atau angka." });
+      return;
+    }
+    const duplicate = fields.find((field) =>
+      field.kode_kolom.toLowerCase() === code ||
+      field.nama_kolom.trim().toLowerCase() === name.toLowerCase()
+    );
+    if (duplicate) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Kolom sudah tersedia",
+        text: `"${duplicate.nama_kolom}" sudah terdaftar dengan kode "${duplicate.kode_kolom}". Gunakan nama lain atau kelola kolom yang sudah ada.`,
+      });
+      return;
+    }
+    setSaving(true);
+    try {
+      const response = await fetch("/api/admin/event-cabang", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create-field", kode_kolom: code, nama_kolom: name }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah kolom foto.");
+      setFieldNameDraft("");
+      await refreshConfig();
+      await Swal.fire({ icon: "success", title: "Kolom foto ditambahkan", text: result.message || "Kolom foto berhasil ditambahkan.", timer: 1500, showConfirmButton: false });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Gagal menambah kolom foto.";
+      await Swal.fire({ icon: "error", title: "Gagal menambah kolom", text: message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteField(field: Field) {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: "Hapus jenis kolom foto?",
+      html: `Jenis <strong>${field.nama_kolom}</strong> (<code>${field.kode_kolom}</code>) akan dihapus hanya jika belum dipakai konfigurasi cabang/event.`,
+      showCancelButton: true,
+      confirmButtonText: "Ya, hapus",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#dc2626",
+      reverseButtons: true,
+    });
+    if (!confirmation.isConfirmed) return;
+    setSaving(true);
+    try {
+      const response = await fetch("/api/admin/event-cabang", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_jenis_dokumentasi: field.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Gagal menghapus kolom foto.");
+      await refreshConfig();
+      await Swal.fire({ icon: "success", title: "Kolom foto dihapus", text: result.message || "Kolom foto berhasil dihapus.", timer: 1500, showConfirmButton: false });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Gagal menghapus kolom foto.";
+      await Swal.fire({ icon: "error", title: "Tidak dapat menghapus kolom", text: message });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function save() {
     if (!selectedBranch) { await Swal.fire({ icon: "warning", title: "Pilih cabang", text: "Pilih cabang terlebih dahulu." }); return; }
     setSaving(true);
