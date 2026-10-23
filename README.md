@@ -124,6 +124,20 @@ Build produksi dibuat dengan `npm run build`, lalu dijalankan menggunakan `npm r
 
 Lihat implementasi masing-masing Route Handler untuk parameter, bentuk payload, dan validasi terkini.
 
+## Event and photo-field permissions per branch
+
+This feature adds an admin page at `/admin/event-cabang`. The administrator assigns master events to each branch and enables only the photo fields needed for each branch/event. The public form rejects branches without an active event assignment and displays a SweetAlert. The upload API independently validates the branch, event assignment, and photo-field assignment.
+
+Before deploying this feature:
+
+1. Back up the production database.
+2. Run `database/migrations/20261023_branch_event_photo_config.sql` against the configured database.
+3. Open **Admin → Konfigurasi Event Cabang**, select each branch, enable its event assignments, and select the required photo fields.
+4. Verify the branch table has the new `kode_kolom` metadata field. `ensureCabangTable` adds it on the branch's next upload; the migration README documents a manual ALTER alternative.
+5. Test an unassigned branch (expected SweetAlert), an assigned branch with different configured fields, and an attempt to post an unassigned field directly to `/api/dokumentasi` (expected HTTP 403).
+
+Existing branches are not automatically assigned to events. This is deliberate: access should be granted intentionally rather than silently making every existing event visible to every branch.
+
 ## Database dan file upload
 
 Kode membentuk atau mengambil tabel dokumentasi per cabang melalui helper di `lib/cabang-table.ts`. Karena nama/skema tabel bersifat dinamis, pastikan backup dan hak akses database sudah benar sebelum mencoba fitur tulis/hapus.
