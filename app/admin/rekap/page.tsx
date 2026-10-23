@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Select from "react-select";
 import Swal from "sweetalert2";
 
 type Mode = "month" | "day" | "event" | "branch" | "branch_event";
@@ -89,8 +90,8 @@ export default function RekapAdminPage() {
   const [year, setYear] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [kodeCabang, setKodeCabang] = useState("");
-  const [eventName, setEventName] = useState("");
+  const [kodeCabang, setKodeCabang] = useState<string[]>([]);
+  const [eventName, setEventName] = useState<string[]>([]);
 
   const [branches, setBranches] = useState<BranchOption[]>([]);
   const [events, setEvents] = useState<string[]>([]);
@@ -154,8 +155,8 @@ export default function RekapAdminPage() {
     if (year) params.set("year", year);
     if (dateFrom) params.set("from", dateFrom);
     if (dateTo) params.set("to", dateTo);
-    if (kodeCabang) params.set("kode_cabang", kodeCabang);
-    if (eventName) params.set("event", eventName);
+    kodeCabang.forEach((value) => params.append("kode_cabang[]", value));
+    eventName.forEach((value) => params.append("event[]", value));
     return params;
   }
 
@@ -292,20 +293,42 @@ export default function RekapAdminPage() {
           </div>
           <div>
             <label htmlFor="kode_cabang" className="mb-1.5 block text-sm font-medium text-slate-700">Cabang</label>
-            <select id="kode_cabang" value={kodeCabang} onChange={(event) => setKodeCabang(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-              <option value="">Semua cabang</option>
-              {branches.map((item) => <option key={item.kode_cabang} value={item.kode_cabang}>{item.nama_cabang} ({item.kode_cabang})</option>)}
-            </select>
+            <Select
+              inputId="kode_cabang"
+              isMulti
+              isClearable
+              isSearchable
+              closeMenuOnSelect={false}
+              options={branches.map((item) => ({ value: item.kode_cabang, label: `${item.nama_cabang} (${item.kode_cabang})` }))}
+              value={branches.filter((item) => kodeCabang.includes(item.kode_cabang)).map((item) => ({ value: item.kode_cabang, label: `${item.nama_cabang} (${item.kode_cabang})` }))}
+              onChange={(selected) => setKodeCabang((selected || []).map((item) => item.value))}
+              placeholder="Cari dan pilih cabang..."
+              noOptionsMessage={() => "Cabang tidak ditemukan"}
+              className="text-sm"
+              classNamePrefix="rekap-select"
+              styles={{ control: (base, state) => ({ ...base, minHeight: 42, borderRadius: 8, borderColor: state.isFocused ? "#3b82f6" : "#cbd5e1", boxShadow: state.isFocused ? "0 0 0 3px rgba(59,130,246,.12)" : "none", ":hover": { borderColor: "#93c5fd" } }), menu: (base) => ({ ...base, zIndex: 50 }) }}
+            />
           </div>
           <div>
             <label htmlFor="event" className="mb-1.5 block text-sm font-medium text-slate-700">Event</label>
-            <select id="event" value={eventName} onChange={(event) => setEventName(event.target.value)} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100">
-              <option value="">Semua event</option>
-              {events.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
+            <Select
+              inputId="event"
+              isMulti
+              isClearable
+              isSearchable
+              closeMenuOnSelect={false}
+              options={events.map((item) => ({ value: item, label: item }))}
+              value={eventName.map((value) => ({ value, label: value }))}
+              onChange={(selected) => setEventName((selected || []).map((item) => item.value))}
+              placeholder="Cari dan pilih event..."
+              noOptionsMessage={() => "Event tidak ditemukan"}
+              className="text-sm"
+              classNamePrefix="rekap-select"
+              styles={{ control: (base, state) => ({ ...base, minHeight: 42, borderRadius: 8, borderColor: state.isFocused ? "#3b82f6" : "#cbd5e1", boxShadow: state.isFocused ? "0 0 0 3px rgba(59,130,246,.12)" : "none", ":hover": { borderColor: "#93c5fd" } }), menu: (base) => ({ ...base, zIndex: 50 }) }}
+            />
           </div>
           <div className="flex items-end gap-2 sm:col-span-2 xl:col-span-2 xl:justify-end">
-            <button type="button" onClick={() => { setMode("month"); setYear(""); setDateFrom(""); setDateTo(""); setKodeCabang(""); setEventName(""); }} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Reset Filter</button>
+            <button type="button" onClick={() => { setMode("month"); setYear(""); setDateFrom(""); setDateTo(""); setKodeCabang([]); setEventName([]); }} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Reset Filter</button>
             <button type="submit" disabled={loading} className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50">{loading ? "Memuat..." : "Tampilkan Rekap"}</button>
           </div>
         </div>
