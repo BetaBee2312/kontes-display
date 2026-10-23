@@ -44,14 +44,16 @@ export async function GET(request: NextRequest) {
 
     const ids = events.map((item) => Number(item.id)).filter(Number.isSafeInteger);
     const placeholders = ids.map(() => "?").join(",");
+    const ids = events.map((item) => Number(item.id)).filter(Number.isSafeInteger);
+    const placeholders = ids.map(() => "?").join(",");
     const [fieldRows] = await db.execute(
-      `SELECT ecc.id_event, jd.id, jd.kode_kolom, jd.nama_kolom, ecc.urutan, ecc.wajib
-       FROM tb_event_cabang_kolom ecc
-       INNER JOIN tb_jenis_dokumentasi jd ON jd.id = ecc.id_jenis_dokumentasi
-       WHERE ecc.kode_cabang = ? AND ecc.aktif = 1 AND jd.aktif = 1
-         AND ecc.id_event IN (${placeholders})
-       ORDER BY ecc.id_event, ecc.urutan, jd.nama_kolom`,
-      [branchCode, ...ids],
+      `SELECT ek.id_event, jd.id, jd.kode_kolom, jd.nama_kolom, ek.urutan, ek.wajib
+       FROM tb_event_kolom ek
+       INNER JOIN tb_jenis_dokumentasi jd ON jd.id = ek.id_jenis_dokumentasi
+       WHERE ek.aktif = 1 AND jd.aktif = 1
+         AND ek.id_event IN (${placeholders})
+       ORDER BY ek.id_event, ek.urutan, jd.nama_kolom`,
+      ids,
     );
     const columnsByEvent = new Map<number, Array<{id:number;kode_kolom:string;nama_kolom:string;urutan:number;wajib:boolean}>>();
     for (const row of fieldRows as Array<{id_event:number;id:number;kode_kolom:string;nama_kolom:string;urutan:number;wajib:number}>) {
