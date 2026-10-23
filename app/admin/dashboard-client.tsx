@@ -105,7 +105,7 @@ function ChartCard({ title, subtitle, badge, children }: { title: string; subtit
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/30 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div><h3 className="text-base font-bold text-slate-900 sm:text-lg">{title}</h3><p className="mt-1 text-sm text-slate-500">{subtitle}</p></div>
+        <div><h3 className="text-base font-bold text-slate-900 sm:text-lg">{title}</h3></div>
         <span className="w-fit rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">{badge}</span>
       </div>
       {children}
@@ -134,9 +134,9 @@ function LineChart({ items }: { items: ChartItem[] }) {
           {coords.map((point) => <g key={point.key}><circle cx={point.x} cy={point.y} r={point.value > 0 ? 4 : 2.5} fill={point.value > 0 ? "#2563EB" : "#CBD5E1"}><title>{`${point.label}: ${formatNumber(point.value)} dokumentasi`}</title></circle></g>)}
           {coords.filter((_, index) => index === 0 || index === coords.length - 1 || index % 2 === 0).map((point) => <text key={`${point.key}-label`} x={point.x} y="205" textAnchor="middle" fill="#64748B" fontSize="11">{point.label}</text>)}
         </svg>
-        {!hasUploads && <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4"><div className="rounded-xl border border-slate-200 bg-white/95 px-4 py-3 text-center shadow-sm"><p className="text-sm font-semibold text-slate-700">Belum ada pengiriman di periode ini</p><p className="mt-1 text-xs text-slate-500">Grafik otomatis terisi saat dokumentasi harian masuk.</p></div></div>}
+        {!hasUploads && <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4"><div className="rounded-xl border border-slate-200 bg-white/95 px-4 py-3 text-center shadow-sm"><p className="text-sm font-semibold text-slate-700">Belum ada pengiriman di periode ini</p></div></div>}
       </div>
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500"><span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" />Jumlah dokumentasi per hari</span><span>{formatNumber(items.reduce((sum, item) => sum + item.value, 0))} dokumentasi dalam rentang ini</span></div>
+      
     </div>
   );
 }
@@ -160,8 +160,8 @@ function BarChart({ items, color, emptyMessage }: { items: ChartItem[]; color: s
           })}
         </svg>
       </div>
-      {!anyValue && <p className="mt-3 rounded-lg border border-dashed border-slate-200 px-4 py-3 text-center text-xs text-slate-500">{emptyMessage}</p>}
-      {anyValue && <p className="mt-3 text-xs text-slate-500">Total periode pada grafik: <span className="font-semibold text-slate-700">{formatNumber(items.reduce((sum, item) => sum + item.value, 0))} dokumentasi</span></p>}
+      {!anyValue && }
+      {anyValue && }
     </div>
   );
 }
