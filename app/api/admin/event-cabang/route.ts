@@ -210,26 +210,6 @@ export async function PUT(request: NextRequest) {
          ON DUPLICATE KEY UPDATE aktif = VALUES(aktif)`,
         [kodeCabang, idEvent, active ? 1 : 0],
       );
-      await connection.execute(
-        `UPDATE tb_event_cabang_kolom SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
-        [kodeCabang, idEvent],
-      );
-
-      const columns = Array.isArray(assignment.columns) ? assignment.columns : [];
-      for (const [index, field] of columns.entries()) {
-        const idJenis = Number(field.id_jenis_dokumentasi);
-        const columnActive = active && (field.aktif === true || Number(field.aktif) === 1);
-        const required = field.wajib === true || Number(field.wajib) === 1;
-        const order = Number.isInteger(Number(field.urutan)) ? Number(field.urutan) : index;
-        await connection.execute(
-          `INSERT INTO tb_event_cabang_kolom
-            (kode_cabang, id_event, id_jenis_dokumentasi, urutan, wajib, aktif)
-           VALUES (?, ?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE
-             urutan = VALUES(urutan), wajib = VALUES(wajib), aktif = VALUES(aktif)`,
-          [kodeCabang, idEvent, idJenis, order, required ? 1 : 0, columnActive ? 1 : 0],
-        );
-      }
     }
 
     await connection.commit();
