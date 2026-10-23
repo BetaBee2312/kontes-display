@@ -318,51 +318,32 @@ export default function BranchEventConfigPage() {
                 </div>
                 {events.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Belum ada event di master data. Tambahkan event terlebih dahulu.</div>}
 
-                {configs.map((config) => {
-                  const event = events.find((item) => String(item.id) === config.id_event);
-                  if (!event) return null;
-                  return (
-                    <article key={config.id_event} className={`overflow-hidden rounded-xl border bg-white ${config.aktif ? "border-blue-200" : "border-slate-200"}`}>
-                      <div className="flex items-start gap-3 border-b border-slate-200 p-4 sm:p-5">
-                        <input type="checkbox" checked={config.aktif} onChange={(e) => updateEvent(config.id_event, e.target.checked)}
-                          aria-label={`Aktifkan event ${event.nama_event}`} className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600" />
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-semibold text-slate-900">{event.nama_event}</h3>
-                          <p className="mt-1 text-xs text-slate-500">{event.kode_event} · {config.aktif ? "Event diberikan ke cabang ini" : "Event tidak dapat diakses cabang ini"}</p>
-                        </div>
-                        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${config.aktif ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{config.aktif ? "Aktif" : "Nonaktif"}</span>
-                      </div>
-                      <div className="p-4 sm:p-5">
-                        <p className="mb-3 text-sm font-semibold text-slate-800">Kolom foto yang ditampilkan</p>
-                        <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
-                          {config.columns.map((col) => {
-                            const field = fields.find((item) => String(item.id) === col.id_jenis_dokumentasi);
-                            if (!field) return null;
-                            return (
-                              <div key={col.id_jenis_dokumentasi} className={`rounded-lg border p-3 ${col.aktif && config.aktif ? "border-blue-200 bg-blue-50/40" : "border-slate-200"}`}>
-                                <label className="flex cursor-pointer items-start gap-2.5">
-                                  <input type="checkbox" checked={col.aktif} disabled={!config.aktif || !isOn(field.aktif)}
-                                    onChange={(e) => updateColumn(config.id_event, col.id_jenis_dokumentasi, { aktif: e.target.checked })}
-                                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600" />
-                                  <span className="min-w-0 flex-1">
-                                    <span className="block text-sm font-semibold text-slate-800">{field.nama_kolom}</span>
-                                    <span className="mt-1 block font-mono text-xs text-slate-500">{field.kode_kolom}</span>
-                                  </span>
-                                </label>
-                                {col.aktif && config.aktif && <label className="mt-3 flex items-center gap-2 pl-6 text-xs text-slate-600">
-                                  <input type="checkbox" checked={col.wajib} onChange={(e) => updateColumn(config.id_event, col.id_jenis_dokumentasi, { wajib: e.target.checked })}
-                                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600" />
-                                  Wajib diupload
-                                </label>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {config.aktif && !config.columns.some((col) => col.aktif) && <p className="mt-3 text-xs text-amber-700">Event aktif tanpa kolom foto. Cabang tetap perlu minimal satu kolom agar dapat mengirim dokumentasi.</p>}
-                      </div>
-                    </article>
-                  );
-                })}
+                <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                      <h3 className="font-semibold text-slate-900">Akses Event untuk Cabang</h3>
+                      <p className="mt-1 text-sm text-slate-500">Pilih event yang bisa digunakan cabang ini. Kolom dokumentasi diatur terpusat dari menu Data Event.</p>
+                    </div>
+                    <span className="text-xs font-medium text-slate-500">{configs.filter((config) => config.aktif).length} dari {configs.length} event aktif</span>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    {configs.map((config) => {
+                      const event = events.find((item) => String(item.id) === config.id_event);
+                      if (!event) return null;
+                      return (
+                        <label key={config.id_event} className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition ${config.aktif ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
+                          <input type="checkbox" checked={config.aktif} onChange={(event) => updateEvent(config.id_event, event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-sm font-semibold text-slate-900">{event.nama_event}</span>
+                            <span className="mt-1 block font-mono text-xs text-slate-500">{event.kode_event}</span>
+                          </span>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${config.aktif ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>{config.aktif ? "Diizinkan" : "Tidak diizinkan"}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {configs.length === 0 && <p className="mt-4 text-sm text-slate-500">Belum ada event di master data.</p>}
+                </div>
                 <div className="flex justify-end">
                   <button type="button" onClick={() => void save()} disabled={saving}
                     className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50">
