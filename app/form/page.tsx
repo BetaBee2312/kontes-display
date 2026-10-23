@@ -803,13 +803,9 @@ export default function FormPage() {
 
 
 
-      if (!selectedFieldCode) {
-        throw new Error("Pilih kolom dokumentasi terlebih dahulu.");
-      }
       setFieldPhotos((current) => ({ ...current, [selectedFieldCode]: [...(current[selectedFieldCode] || []), ...compressedFiles] }));
       setFieldPreviews((current) => ({ ...current, [selectedFieldCode]: [...(current[selectedFieldCode] || []), ...compressedFiles.map((file) => URL.createObjectURL(file))] }));
       setFotos((current) => [...current, ...compressedFiles]);
-      setPreviews((current) => [...current, ...compressedFiles.map((file) => URL.createObjectURL(file))]);
 
 
 
