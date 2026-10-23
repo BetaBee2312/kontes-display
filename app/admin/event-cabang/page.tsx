@@ -33,6 +33,7 @@ export default function BranchEventConfigPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [fieldNameDraft, setFieldNameDraft] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -99,6 +100,36 @@ export default function BranchEventConfigPage() {
     }));
   }
 
+  async function addField() {
+    const name = fieldNameDraft.trim();
+    if (!name) { setError("Nama kolom foto wajib diisi."); return; }
+    const code = name.toLowerCase().trim().normalize("NFKD")
+      .replace(/[\\u0300-\\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "")
+      .slice(0, 50);
+    if (!code) { setError("Nama kolom tidak menghasilkan kode yang valid."); return; }
+    setError(""); setMessage("");
+    try {
+      const response = await fetch("/api/admin/event-cabang", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create-field", kode_kolom: code, nama_kolom: name }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah kolom foto.");
+      setFieldNameDraft("");
+      const refresh = await fetch("/api/admin/event-cabang", { cache: "no-store" });
+      const refreshed = await refresh.json();
+      if (!refresh.ok || !refreshed.success) throw new Error(refreshed.message || "Kolom tersimpan, tetapi gagal memuat ulang data.");
+      setFields(refreshed.data.fields || []);
+      setAssignments(refreshed.data.assignments || []);
+      setFieldAssignments(refreshed.data.fieldAssignments || []);
+      setEvents(refreshed.data.events || []);
+      setBranches(refreshed.data.cabang || []);
+      setMessage(result.message || "Kolom foto berhasil ditambahkan.");
+    } catch (e) { setError(e instanceof Error ? e.message : "Gagal menambah kolom foto."); }
+  }
   async function save() {
     if (!selectedBranch) { setError("Pilih cabang terlebih dahulu."); return; }
     setSaving(true); setError(""); setMessage("");
@@ -175,6 +206,15 @@ export default function BranchEventConfigPage() {
                   </button>
                 </div>
 
+                <div className="rounded-xl border border-slate-200 bg-white p-4">
+                  <h3 className="text-sm font-semibold text-slate-900">Jenis Kolom Foto</h3>
+                  <p className="mt-1 text-xs text-slate-500">Tambahkan jenis dokumentasi baru. Setelah dibuat, aktifkan pada event cabang yang membutuhkannya.</p>
+                  <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); void addField(); }}>
+                    <input value={fieldNameDraft} onChange={(event) => setFieldNameDraft(event.target.value)} maxLength={100} placeholder="Contoh: Foto Voucher" className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
+                    <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Tambah Kolom Foto</button>
+                  </form>
+                  {fields.length > 0 && <p className="mt-2 text-xs text-slate-500">Tersedia: {fields.map((field) => field.nama_kolom).join(", ")}</p>}
+                </div>
                 {events.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Belum ada event di master data. Tambahkan event terlebih dahulu.</div>}
 
                 {configs.map((config) => {
