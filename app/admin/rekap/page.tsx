@@ -268,7 +268,7 @@ export default function RekapAdminPage() {
         </button>
       </div>
 
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+      
 
       <form onSubmit={handleApply} className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
