@@ -82,13 +82,12 @@ export async function POST(request: Request) {
     const event = assignmentRows[0] as { id: number; kode_event: string; nama_event: string };
 
     const [fieldRows] = await db.execute(
-      `SELECT jd.id, jd.kode_kolom, jd.nama_kolom, ecc.wajib
-       FROM tb_event_cabang_kolom ecc
-       INNER JOIN tb_jenis_dokumentasi jd ON jd.id = ecc.id_jenis_dokumentasi
-       WHERE ecc.kode_cabang = ? AND ecc.id_event = ?
-         AND ecc.aktif = 1 AND jd.aktif = 1 AND jd.kode_kolom = ?
+      `SELECT jd.id, jd.kode_kolom, jd.nama_kolom, ek.wajib
+       FROM tb_event_kolom ek
+       INNER JOIN tb_jenis_dokumentasi jd ON jd.id = ek.id_jenis_dokumentasi
+       WHERE ek.id_event = ? AND ek.aktif = 1 AND jd.aktif = 1 AND jd.kode_kolom = ?
        LIMIT 1`,
-      [kodeCabang, Number(event.id), kodeKolom],
+      [Number(event.id), kodeKolom],
     );
     if (!Array.isArray(fieldRows) || fieldRows.length === 0) {
       return NextResponse.json({ success: false, code: "FIELD_NOT_ASSIGNED", message: "Jenis foto ini tidak diizinkan untuk event dan cabang tersebut." }, { status: 403 });
