@@ -208,7 +208,7 @@ export default function AdminLayout({
         <aside className={`fixed inset-y-0 left-0 z-50 flex w-[min(84vw,300px)] shrink-0 flex-col border-r border-slate-200 bg-white px-4 py-5 shadow-xl transition-transform duration-200 lg:sticky lg:top-0 lg:z-10 lg:h-screen lg:w-64 lg:translate-x-0 lg:shadow-none ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
           <div className="mb-2 flex items-center justify-between">
           <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="flex min-w-0 items-center gap-3 rounded-lg px-2 py-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
+            <div className="flex h-12 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
               <img src="/logo/logoyomart.png" alt="Yomart" className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0">
