@@ -131,7 +131,7 @@ export default function BranchEventConfigPage() {
   }
   async function save() {
     if (!selectedBranch) { await Swal.fire({ icon: "warning", title: "Pilih cabang", text: "Pilih cabang terlebih dahulu." }); return; }
-    setSaving(true); setError(""); setMessage("");
+    setSaving(true);
     try {
       const response = await fetch("/api/admin/event-cabang", {
         method: "PUT",
@@ -176,7 +176,7 @@ export default function BranchEventConfigPage() {
             </div>
             <div className="max-h-[38vh] overflow-y-auto p-2 sm:max-h-[50vh] xl:max-h-[calc(100vh-18rem)]">
               {visibleBranches.map((item) => (
-                <button key={String(item.kode_cabang)} type="button" onClick={() => { setSelectedBranch(String(item.kode_cabang)); setError(""); setMessage(""); }}
+                <button key={String(item.kode_cabang)} type="button" onClick={() => { setSelectedBranch(String(item.kode_cabang)); }}
                   className={`mb-1 w-full rounded-lg p-3 text-left transition ${selectedBranch === String(item.kode_cabang) ? "bg-blue-50 ring-1 ring-blue-200" : "hover:bg-slate-50"}`}>
                   <span className="block text-sm font-semibold text-slate-900">{item.nama_cabang}</span>
                   <span className="mt-1 block font-mono text-xs text-slate-500">{item.kode_cabang} {item.singkatan ? `· ${item.singkatan}` : ""}</span>
