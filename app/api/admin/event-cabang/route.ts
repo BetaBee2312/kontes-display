@@ -50,6 +50,36 @@ export async function GET() {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    if (!(await getAdminUser())) return unauthorizedAdminResponse();
+    const body = await request.json() as { action?: unknown; kode_kolom?: unknown; nama_kolom?: unknown };
+    if (body.action !== "create-field") {
+      return NextResponse.json({ success: false, message: "Aksi tidak dikenal." }, { status: 400 });
+    }
+    const kode = clean(body.kode_kolom).toLowerCase();
+    const nama = clean(body.nama_kolom);
+    if (!/^[a-z0-9_]{1,50}$/.test(kode) || !nama || nama.length > 100) {
+      return NextResponse.json({ success: false, message: "Kode kolom harus berupa huruf kecil, angka, atau garis bawah; nama maksimal 100 karakter." }, { status: 400 });
+    }
+    const [existing] = await db.execute(
+      `SELECT id FROM tb_jenis_dokumentasi WHERE kode_kolom = ? LIMIT 1`,
+      [kode],
+    );
+    if (Array.isArray(existing) && existing.length > 0) {
+      return NextResponse.json({ success: false, message: "Kode kolom tersebut sudah digunakan. Gunakan nama yang berbeda." }, { status: 409 });
+    }
+    await db.execute(
+      `INSERT INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif) VALUES (?, ?, 1)`,
+      [kode, nama],
+    );
+    return NextResponse.json({ success: true, message: `Kolom foto "${nama}" berhasil ditambahkan. Aktifkan untuk cabang/event yang membutuhkan.` }, { status: 201 });
+  } catch (error) {
+    const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+    if (code === "ER_DUP_ENTRY") return NextResponse.json({ success: false, message: "Kode kolom tersebut sudah digunakan." }, { status: 409 });
+    return databaseError(error, "Gagal menambahkan jenis kolom foto.");
+  }
+}
 export async function PUT(request: NextRequest) {
   let connection: Awaited<ReturnType<typeof db.getConnection>> | undefined;
   try {
