@@ -76,7 +76,7 @@ export default function AdminLoginPage() {
           </div>
           <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.2em] text-blue-600">Marketing Documentation</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">Masuk ke admin</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">Kelola cabang, event, dan dokumentasi marketing.</p>
+
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6 sm:px-8">
