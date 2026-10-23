@@ -196,7 +196,7 @@ export async function PUT(request: NextRequest) {
     };
     const kodeCabang = clean(body.kode_cabang);
     const assignments = Array.isArray(body.assignments) ? body.assignments : [];
-    if (!/^\d+$/.test(kodeCabang)) {
+    if (!/^\\d+$/.test(kodeCabang)) {
       return NextResponse.json({ success: false, message: "Kode cabang tidak valid." }, { status: 400 });
     }
     const eventIds = assignments.map((item) => Number(item.id_event));
