@@ -194,7 +194,7 @@ export default function AdminLayout({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen min-w-0">
         {/* SIDEBAR DESKTOP */}
         <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white px-4 py-5 lg:flex lg:flex-col">
           <Link href="/admin" className="flex items-center gap-3 rounded-lg px-2 py-3">
