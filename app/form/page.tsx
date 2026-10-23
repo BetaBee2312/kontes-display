@@ -190,6 +190,12 @@ export default function FormPage() {
 
     useState("");
 
+  const [alertDialog, setAlertDialog] = useState<{ title: string; text: string; icon: "warning" | "error" } | null>(null);
+
+  function showAlert(title: string, text: string, icon: "warning" | "error" = "warning") {
+    setAlertDialog({ title, text, icon });
+  }
+
 
 
 
@@ -241,7 +247,7 @@ export default function FormPage() {
 
         if (!response.ok) {
           if (response.status === 503 || result.code === "NO_EVENTS") {
-            window.alert(result.message || "Cabang ini belum terdaftar di event manapun.");
+            showAlert("Cabang Belum Terdaftar", result.message || "Cabang ini belum terdaftar di event manapun.");
             setEvents([]);
             return;
           }
@@ -262,7 +268,7 @@ export default function FormPage() {
           const allowedEvents = result.data as EventOption[];
           setEvents(allowedEvents);
           if (allowedEvents.length === 0) {
-            window.alert("Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
+            showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
           }
         } else {
 
@@ -558,12 +564,12 @@ export default function FormPage() {
 
 
       if (result.code === "CONFIG_NOT_INSTALLED") {
-        window.alert(result.message || "Administrator perlu menyiapkan konfigurasi event cabang terlebih dahulu.");
+        showAlert("Konfigurasi Belum Disiapkan", result.message || "Administrator perlu menyiapkan konfigurasi event cabang terlebih dahulu.", "error");
         return;
       }
 
       if (!Array.isArray(result.data?.events) || result.data.events.length === 0) {
-        window.alert("Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator.");
+        showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator.");
         setCabang(null);
         return;
       }
@@ -964,7 +970,22 @@ export default function FormPage() {
 
   return (
 
-    <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
+    <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">    {alertDialog && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAlertDialog(null); }}>
+        <section role="alertdialog" aria-modal="true" aria-labelledby="branch-alert-title" aria-describedby="branch-alert-description" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${alertDialog.icon === "error" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
+            <svg viewBox="0 0 24 24" className="h-9 w-9" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              {alertDialog.icon === "error" ? <><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/></> : <><path d="M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 3h.01"/></>}
+            </svg>
+          </div>
+          <h2 id="branch-alert-title" className="mt-4 text-xl font-semibold text-slate-900">{alertDialog.title}</h2>
+          <p id="branch-alert-description" className="mt-2 text-sm leading-6 text-slate-600">{alertDialog.text}</p>
+          <button type="button" autoFocus onClick={() => setAlertDialog(null)} className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">Mengerti</button>
+        </section>
+      </div>
+    )}
+
+
 
       <div className="mx-auto max-w-xl">
 
