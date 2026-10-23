@@ -188,9 +188,6 @@ export default function BranchEventConfigPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-600">Access control</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Konfigurasi Event Cabang</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-            Tentukan event yang boleh digunakan setiap cabang. Jenis kolom dokumentasi dan checklist kolom per event dikelola terpusat di menu Data Event.
-          </p>
         </div>
         <button type="button" onClick={() => void load()} disabled={loading || saving}
           className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50">Muat ulang</button>
