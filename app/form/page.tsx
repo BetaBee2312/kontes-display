@@ -403,14 +403,7 @@ export default function FormPage() {
 
 
     setEvents([]);
-
-
-
-    setError("");
-
-    setMessage("");
-
-  }
+}
 
 
 
@@ -451,12 +444,7 @@ export default function FormPage() {
       resetFormSetelahCabang();
 
     } else {
-
-      setError("");
-
-      setMessage("");
-
-    }
+}
 
   }
 
@@ -473,14 +461,7 @@ export default function FormPage() {
    */
 
   async function cekCabang() {
-
-    setError("");
-
-    setMessage("");
-
-
-
-    /*
+/*
 
      * Sebelum request baru,
 
@@ -632,14 +613,7 @@ export default function FormPage() {
     setEventSearch("");
 
     setEventOpen(false);
-
-
-
-    setError("");
-
-    setMessage("");
-
-  }
+}
 
 
 
@@ -658,10 +632,7 @@ export default function FormPage() {
     e: React.ChangeEvent<HTMLInputElement>
 
   ) {
-
-    setError("");
-    setMessage("");
-    if (!selectedFieldCode) {
+if (!selectedFieldCode) {
       void Swal.fire({ icon: "warning", title: "Pilih jenis dokumentasi", text: "Pilih jenis dokumentasi terlebih dahulu." });
       e.target.value = "";
       return;
@@ -810,10 +781,7 @@ export default function FormPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError("");
-    setMessage("");
-
-    if (!cabang) {
+if (!cabang) {
       void Swal.fire({ icon: "warning", title: "Cabang belum dipilih", text: "Periksa kode cabang terlebih dahulu." });
       return;
     }
@@ -1413,14 +1381,7 @@ export default function FormPage() {
                           );
 
                         }
-
-
-
-                        setError("");
-
-                        setMessage("");
-
-                      }}
+}}
 
                       onKeyDown={(e) => {
 
@@ -1475,16 +1436,7 @@ export default function FormPage() {
                               ""
 
                             );
-
-
-
-                            setError(
-
-                              ""
-
-                            );
-
-                          }}
+}}
 
                           className="mr-1 rounded-lg px-2 py-1 text-lg leading-none text-slate-400 transition hover:bg-slate-100 hover:text-red-500"
 
