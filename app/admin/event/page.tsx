@@ -184,11 +184,7 @@ export default function EventAdminPage() {
         </button>
       </div>
 
-      {(error || success) && !formOpen && (
-        <div className={`rounded-lg border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-          {error || success}
-        </div>
-      )}
+
 
       <div className="grid min-w-0 gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-slate-200 bg-white p-5">
