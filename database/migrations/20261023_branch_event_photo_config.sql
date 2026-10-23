@@ -61,36 +61,6 @@ ON DUPLICATE KEY UPDATE
   wajib = VALUES(wajib),
   aktif = VALUES(aktif);
 
--- Event-level photo field configuration.
--- Define each photo field once, then enable it for specific events.
-CREATE TABLE IF NOT EXISTS tb_event_kolom (
-  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  id_event BIGINT UNSIGNED NOT NULL,
-  id_jenis_dokumentasi BIGINT UNSIGNED NOT NULL,
-  urutan INT NOT NULL DEFAULT 0,
-  wajib TINYINT(1) NOT NULL DEFAULT 1,
-  aktif TINYINT(1) NOT NULL DEFAULT 1,
-  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_event_kolom (id_event, id_jenis_dokumentasi),
-  KEY idx_event_kolom_event_aktif (id_event, aktif),
-  KEY idx_event_kolom_jenis (id_jenis_dokumentasi)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Preserve prior setup: a field is enabled for an event if it was enabled for at least one branch.
-INSERT INTO tb_event_kolom (id_event, id_jenis_dokumentasi, urutan, wajib, aktif)
-SELECT
-  old.id_event,
-  old.id_jenis_dokumentasi,
-  MIN(old.urutan) AS urutan,
-  MAX(old.wajib) AS wajib,
-  MAX(old.aktif) AS aktif
-FROM tb_event_cabang_kolom old
-GROUP BY old.id_event, old.id_jenis_dokumentasi
-ON DUPLICATE KEY UPDATE
-  urutan = VALUES(urutan),
-  wajib = VALUES(wajib),
-  aktif = VALUES(aktif);
-
 -- Run once for each existing numbered branch table that predates this feature:
 -- ALTER TABLE tb_23212 ADD COLUMN kode_kolom VARCHAR(50) NOT NULL DEFAULT 'foto';
 -- The ensureCabangTable helper adds the column lazily for a branch on its next upload.
