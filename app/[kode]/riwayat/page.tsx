@@ -46,7 +46,8 @@ function RiwayatLoading() {
         href="/form"
         className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
       >
-        ← Kembali ke Form
+        <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>
+        Kembali ke Form
       </Link>
 
       <div className="mt-6">
@@ -119,7 +120,8 @@ async function RiwayatContent({
           href="/form"
           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
-          ← Kembali ke Form
+          <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>
+        Kembali ke Form
         </Link>
 
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
@@ -184,22 +186,19 @@ async function RiwayatContent({
           href="/form"
           className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
-          ← Kembali ke Form
+          <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>
+        Kembali ke Form
         </Link>
 
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-3xl">
-            📂
+            <svg aria-hidden="true" className="h-8 w-8 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z" /><path d="M3.5 10h17" /></svg>
           </div>
 
           <h1 className="mt-5 text-2xl font-bold text-slate-900">
             Belum Ada Riwayat
           </h1>
 
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-            {cabang.nama_cabang} belum memiliki
-            dokumentasi yang tersimpan.
-          </p>
 
           <Link
             href="/form"
@@ -242,7 +241,8 @@ async function RiwayatContent({
         href="/form"
         className="inline-flex items-center gap-1 text-sm font-medium text-blue-600 transition hover:text-blue-700"
       >
-        ← Kembali ke Form
+        <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /><path d="M9 12h12" /></svg>
+        Kembali ke Form
       </Link>
 
       <div className="mt-6">
