@@ -126,6 +126,66 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
+export async function PATCH(request: NextRequest) {
+  let connection: Awaited<ReturnType<typeof db.getConnection>> | undefined;
+  try {
+    if (!(await getAdminUser())) return unauthorizedAdminResponse();
+    const body = await request.json() as {
+      id_event?: unknown;
+      columns?: Array<{ id_jenis_dokumentasi?: unknown; aktif?: unknown; wajib?: unknown; urutan?: unknown }>;
+    };
+    const idEvent = Number(body.id_event);
+    const columns = Array.isArray(body.columns) ? body.columns : [];
+    if (!Number.isSafeInteger(idEvent) || idEvent <= 0) {
+      return NextResponse.json({ success: false, message: "ID event tidak valid." }, { status: 400 });
+    }
+    const fieldIds = columns.map((item) => Number(item.id_jenis_dokumentasi));
+    if (fieldIds.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(fieldIds).size !== fieldIds.length) {
+      return NextResponse.json({ success: false, message: "Daftar kolom foto tidak valid atau duplikat." }, { status: 400 });
+    }
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    const [events] = await connection.execute(`SELECT id FROM tb_event WHERE id = ? LIMIT 1 FOR UPDATE`, [idEvent]);
+    if (!Array.isArray(events) || events.length === 0) {
+      await connection.rollback();
+      return NextResponse.json({ success: false, message: "Event tidak ditemukan." }, { status: 404 });
+    }
+
+    const [knownFields] = await connection.query(`SELECT id FROM tb_jenis_dokumentasi WHERE aktif = 1`);
+    const validIds = new Set((knownFields as Array<{ id: number | string }>).map((item) => Number(item.id)));
+    if (fieldIds.some((id) => !validIds.has(id))) {
+      await connection.rollback();
+      return NextResponse.json({ success: false, message: "Terdapat jenis dokumentasi yang tidak aktif atau tidak dikenal." }, { status: 400 });
+    }
+
+    await connection.execute(`DELETE FROM tb_event_kolom WHERE id_event = ?`, [idEvent]);
+    for (const [index, field] of columns.entries()) {
+      const idField = Number(field.id_jenis_dokumentasi);
+      const active = field.aktif === true || Number(field.aktif) === 1;
+      const required = field.wajib === true || Number(field.wajib) === 1;
+      const order = Number.isInteger(Number(field.urutan)) ? Number(field.urutan) : index;
+      await connection.execute(
+        `INSERT INTO tb_event_kolom (id_event, id_jenis_dokumentasi, urutan, wajib, aktif)
+         VALUES (?, ?, ?, ?, ?)`,
+        [idEvent, idField, order, required ? 1 : 0, active ? 1 : 0],
+      );
+    }
+
+    await connection.commit();
+    return NextResponse.json({ success: true, message: "Kolom dokumentasi event berhasil diperbarui." });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => undefined);
+    const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
+    if (code === "ER_DUP_ENTRY") {
+      return NextResponse.json({ success: false, message: "Kolom dokumentasi event duplikat." }, { status: 409 });
+    }
+    return databaseError(error, "Gagal menyimpan kolom dokumentasi event.");
+  } finally {
+    connection?.release();
+  }
+}
+
 export async function PUT(request: NextRequest) {
   let connection: Awaited<ReturnType<typeof db.getConnection>> | undefined;
   try {
