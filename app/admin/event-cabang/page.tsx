@@ -111,8 +111,14 @@ export default function BranchEventConfigPage() {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan konfigurasi.");
       setMessage(result.message || "Konfigurasi berhasil disimpan.");
-      await load();
-      setSelectedBranch(selectedBranch);
+      const refresh = await fetch("/api/admin/event-cabang", { cache: "no-store" });
+      const refreshed = await refresh.json();
+      if (!refresh.ok || !refreshed.success) throw new Error(refreshed.message || "Konfigurasi tersimpan, tetapi gagal memuat ulang data.");
+      setBranches(refreshed.data.cabang || []);
+      setEvents(refreshed.data.events || []);
+      setFields(refreshed.data.fields || []);
+      setAssignments(refreshed.data.assignments || []);
+      setFieldAssignments(refreshed.data.fieldAssignments || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.");
     } finally {
