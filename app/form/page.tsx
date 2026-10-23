@@ -928,23 +928,23 @@ if (!cabang) {
 
         ================================================= */}
 
-        <div className="mb-5 sm:mb-7">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600 sm:text-sm">
-            Marketing Documentation
-          </p>
+        <div className="mb-5 flex items-start justify-between gap-3 sm:mb-7 sm:gap-5">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-blue-600 sm:text-sm sm:tracking-[0.18em]">
+              Marketing Documentation
+            </p>
 
-          <h1 className="mt-3 text-[1.8rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-4xl">
-            Upload Dokumentasi
-            <span className="mt-1 block text-blue-600">by Marketing</span>
-          </h1>
-
-          <div className="mt-4 flex justify-center">
-            <img
-              src="/logo/logoyomart.png"
-              alt="Yomart"
-              className="h-auto w-full max-w-[230px] object-contain sm:max-w-[260px]"
-            />
+            <h1 className="mt-3 text-[1.8rem] font-extrabold leading-[1.08] tracking-tight text-slate-900 sm:text-4xl">
+              Upload Dokumentasi
+              <span className="mt-1 block text-blue-600">by Marketing</span>
+            </h1>
           </div>
+
+          <img
+            src="/logo/logoyomart.png"
+            alt="Yomart"
+            className="mt-1 h-auto w-[104px] shrink-0 object-contain sm:mt-0 sm:w-[150px]"
+          />
         </div>
 
 
