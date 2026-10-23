@@ -549,7 +549,7 @@ export default function FormPage() {
 
       if (!response.ok) {
         if (response.status === 404 && result.code === "BRANCH_NOT_FOUND") {
-          window.alert("Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
+          showAlert("Cabang Belum Terdaftar", "Cabang ini belum terdaftar di event manapun. Silakan hubungi administrator untuk mendapatkan akses event.");
         } else {
           setError(result.message || "Gagal memeriksa cabang.");
         }
