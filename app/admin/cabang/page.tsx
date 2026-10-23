@@ -519,15 +519,7 @@ export default function CabangAdminPage() {
 
 
 
-      {(error || success) && !formOpen && (
 
-        <div className={`rounded-xl border px-4 py-3 text-sm ${error ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-
-          {error || success}
-
-        </div>
-
-      )}
 
 
 
@@ -647,11 +639,7 @@ export default function CabangAdminPage() {
           </div>
         )}
 
-        {error && !formOpen && (
 
-          <div className="border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">{error}</div>
-
-        )}
 
 
 
