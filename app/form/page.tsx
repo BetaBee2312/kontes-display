@@ -1744,7 +1744,7 @@ if (!cabang) {
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-slate-500">Pilih jenis dokumentasi, lalu ambil foto atau pilih gambar dari galeri. Field hanya muncul jika diaktifkan admin.</p>
+                    
                   </div>
                 ) : selectedEvent ? (
                   <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">Event ini belum memiliki kolom foto aktif. Hubungi administrator.</div>
