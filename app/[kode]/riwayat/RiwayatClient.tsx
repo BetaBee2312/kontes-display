@@ -7,11 +7,10 @@ import {
 import Swal from "sweetalert2";
 
 type Riwayat = {
-  id: string;
   event: string;
   kategori?: string;
   tanggal: string;
-  foto: string;
+  foto_ref: string;
 };
 
 type Props = {
@@ -28,7 +27,7 @@ export default function RiwayatClient({
       initialRows
     );
 
-  const [selectedIds, setSelectedIds] =
+  const [selectedPhotoRefs, setSelectedPhotoRefs] =
     useState<string[]>([]);
 
   const [deleting, setDeleting] =
@@ -43,11 +42,11 @@ export default function RiwayatClient({
 
   const allSelected =
     rows.length > 0 &&
-    selectedIds.length ===
+    selectedPhotoRefs.length ===
       rows.length;
 
   const selectedCount =
-    selectedIds.length;
+    selectedPhotoRefs.length;
 
   /*
    * ==========================================
@@ -58,12 +57,12 @@ export default function RiwayatClient({
   function toggleSelectAll() {
 
     if (allSelected) {
-      setSelectedIds([]);
+      setSelectedPhotoRefs([]);
       return;
     }
 
-    setSelectedIds(
-      rows.map((item) => item.id)
+    setSelectedPhotoRefs(
+      rows.map((item) => item.foto_ref)
     );
   }
 
@@ -73,18 +72,18 @@ export default function RiwayatClient({
    * ==========================================
    */
 
-  function toggleSelect(id: string) {
+  function toggleSelect(photoRef: string) {
 
-    setSelectedIds((current) => {
-      if (current.includes(id)) {
+    setSelectedPhotoRefs((current) => {
+      if (current.includes(photoRef)) {
         return current.filter(
-          (item) => item !== id
+          (item) => item !== photoRef
         );
       }
 
       return [
         ...current,
-        id,
+        photoRef,
       ];
     });
   }
@@ -97,7 +96,7 @@ export default function RiwayatClient({
 
   async function handleDelete() {
     if (
-      selectedIds.length === 0 ||
+      selectedPhotoRefs.length === 0 ||
       deleting
     ) {
       return;
@@ -106,7 +105,7 @@ export default function RiwayatClient({
     const confirmation = await Swal.fire({
       icon: "warning",
       title: "Hapus dokumentasi?",
-      text: `Hapus ${selectedIds.length} dokumentasi terpilih? Foto dan data tersebut akan dihapus permanen.`,
+      text: `Hapus ${selectedPhotoRefs.length} dokumentasi terpilih? Foto dan data tersebut akan dihapus permanen.`,
       showCancelButton: true,
       confirmButtonText: "Ya, hapus",
       cancelButtonText: "Batal",
@@ -131,8 +130,8 @@ export default function RiwayatClient({
               kode_cabang:
                 kodeCabang,
 
-              ids:
-                selectedIds,
+              foto_refs:
+                selectedPhotoRefs,
             }),
           }
         );
@@ -160,13 +159,13 @@ export default function RiwayatClient({
       setRows((current) =>
         current.filter(
           (item) =>
-            !selectedIds.includes(
-              item.id
+            !selectedPhotoRefs.includes(
+              item.foto_ref
             )
         )
       );
 
-      setSelectedIds([]);
+      setSelectedPhotoRefs([]);
 
       await Swal.fire({
         icon: "success",
@@ -343,13 +342,13 @@ export default function RiwayatClient({
 
         {rows.map((item) => {
           const checked =
-            selectedIds.includes(
-              item.id
+            selectedPhotoRefs.includes(
+              item.foto_ref
             );
 
           return (
             <div
-              key={item.id}
+              key={item.foto_ref}
               className={[
                 "group overflow-hidden rounded-2xl border bg-white shadow-sm transition",
                 checked
@@ -361,7 +360,7 @@ export default function RiwayatClient({
               <div className="relative aspect-video overflow-hidden bg-slate-100">
 
                 <img
-                  src={item.foto}
+                  src={`/api/dokumentasi/foto?kode_cabang=${encodeURIComponent(kodeCabang)}&ref=${item.foto_ref}`}
                   alt={`Dokumentasi ${item.event}`}
                   className={[
                     "h-full w-full object-cover transition duration-300",
@@ -386,7 +385,7 @@ export default function RiwayatClient({
                       checked={checked}
                       onChange={() =>
                         toggleSelect(
-                          item.id
+                          item.foto_ref
                         )
                       }
                       className="sr-only"
