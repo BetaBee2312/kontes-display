@@ -35,7 +35,13 @@ CREATE TABLE IF NOT EXISTS tb_event_cabang_kolom (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT IGNORE INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif)
-VALUES ('voucher','Voucher',1),('hangmob','Hangmob',1),('display','Display',1),('foto','Foto Dokumentasi',1);
+VALUES
+  ('voucher','Voucher',1),
+  ('hangmob','Hangmob',1),
+  ('display','Display',1),
+  ('floor_display','Floor Display',1),
+  ('spanduk','Spanduk',1),
+  ('foto','Foto Dokumentasi',1);
 
 -- Photo field configuration belongs to events, not individual branches.
 CREATE TABLE IF NOT EXISTS tb_event_kolom (
