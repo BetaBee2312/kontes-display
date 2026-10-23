@@ -192,11 +192,7 @@ export async function PUT(request: NextRequest) {
     if (!(await getAdminUser())) return unauthorizedAdminResponse();
     const body = await request.json() as {
       kode_cabang?: unknown;
-      assignments?: Array<{
-        id_event?: unknown;
-        aktif?: unknown;
-        columns?: Array<{ id_jenis_dokumentasi?: unknown; aktif?: unknown; wajib?: unknown; urutan?: unknown }>;
-      }>;
+      assignments?: Array<{ id_event?: unknown; aktif?: unknown }>;
     };
     const kodeCabang = clean(body.kode_cabang);
     const assignments = Array.isArray(body.assignments) ? body.assignments : [];
@@ -206,6 +202,37 @@ export async function PUT(request: NextRequest) {
     const eventIds = assignments.map((item) => Number(item.id_event));
     if (eventIds.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(eventIds).size !== eventIds.length) {
       return NextResponse.json({ success: false, message: "Daftar event tidak valid atau duplikat." }, { status: 400 });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    const [branchRows] = await connection.execute(
+      `SELECT kode_cabang FROM tb_cabang WHERE kode_cabang = ? LIMIT 1 FOR UPDATE`,
+      [kodeCabang],
+    );
+    if (!Array.isArray(branchRows) || branchRows.length === 0) {
+      await connection.rollback();
+      return NextResponse.json({ success: false, message: "Cabang tidak ditemukan." }, { status: 404 });
+    }
+    const [knownEvents] = await connection.query(`SELECT id FROM tb_event`);
+    const validEventIds = new Set((knownEvents as Array<{ id: number | string }>).map((item) => Number(item.id)));
+    if (eventIds.some((id) => !validEventIds.has(id))) {
+      await connection.rollback();
+      return NextResponse.json({ success: false, message: "Terdapat event yang tidak terdaftar." }, { status: 400 });
+    }
+
+    const submittedIds = new Set(eventIds);
+    const [existingAssignments] = await connection.execute(
+      `SELECT id_event FROM tb_event_cabang WHERE kode_cabang = ?`,
+      [kodeCabang],
+    );
+    for (const row of existingAssignments as Array<{ id_event: number | string }>) {
+      if (!submittedIds.has(Number(row.id_event))) {
+        await connection.execute(
+          `UPDATE tb_event_cabang SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
+          [kodeCabang, Number(row.id_event)],
+        );
+      }
     }
     for (const assignment of assignments) {
       const idEvent = Number(assignment.id_event);
@@ -217,12 +244,11 @@ export async function PUT(request: NextRequest) {
         [kodeCabang, idEvent, active ? 1 : 0],
       );
     }
-
     await connection.commit();
     return NextResponse.json({ success: true, message: "Akses event cabang berhasil disimpan." });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => undefined);
-    return databaseError(error, "Gagal menyimpan konfigurasi event cabang.");
+    return databaseError(error, "Gagal menyimpan akses event cabang.");
   } finally {
     connection?.release();
   }
