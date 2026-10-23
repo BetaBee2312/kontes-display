@@ -970,7 +970,8 @@ export default function FormPage() {
 
   return (
 
-    <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">    {alertDialog && (
+    <main className="min-h-screen bg-slate-100 px-4 py-10 text-slate-900">
+      {alertDialog && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setAlertDialog(null); }}>
         <section role="alertdialog" aria-modal="true" aria-labelledby="branch-alert-title" aria-describedby="branch-alert-description" className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
           <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${alertDialog.icon === "error" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
