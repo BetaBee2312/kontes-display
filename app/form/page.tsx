@@ -897,7 +897,7 @@ export default function FormPage() {
         if (result.data?.id !== undefined) savedIds.push(result.data.id);
       }
 
-      setMessage(`Berhasil menyimpan ${uploadQueue.length} foto dokumentasi${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`);
+      await Swal.fire({ icon: "success", title: "Dokumentasi berhasil disimpan", text: `${uploadQueue.length} foto tersimpan${savedIds.length ? `. ID dokumentasi: ${savedIds.join(", ")}` : ""}.`, confirmButtonText: "Selesai" });
       Object.values(fieldPreviews).flat().forEach((url) => URL.revokeObjectURL(url));
       setFotos([]);
       setFieldPhotos({});
@@ -913,7 +913,7 @@ export default function FormPage() {
       if (galleryInput) galleryInput.value = "";
     } catch (error) {
       console.error("UPLOAD ERROR:", error);
-      setError(error instanceof Error ? error.message : "Terjadi kesalahan saat mengirim data.");
+      await Swal.fire({ icon: "error", title: "Upload gagal", text: error instanceof Error ? error.message : "Terjadi kesalahan saat mengirim data." });
     } finally {
       setLoadingSubmit(false);
     }
