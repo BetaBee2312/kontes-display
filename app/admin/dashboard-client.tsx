@@ -96,7 +96,7 @@ function StatCard({ title, value, description, tone, icon }: {
         </div>
         <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${tones[tone]}`}><Icon name={icon} /></div>
       </div>
-      <p className="mt-3 text-xs leading-5 text-slate-500">{description}</p>
+      
     </div>
   );
 }
@@ -264,8 +264,6 @@ export default function AdminPage() {
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-blue-700">Business insights</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Ringkasan operasional</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Pantau dokumentasi masuk, tren harian, performa bulanan, dan perkembangan dari tahun ke tahun dalam satu dashboard.</p>
-          <p className="mt-2 text-xs text-slate-500">Pembaruan data dilakukan saat halaman dimuat atau disegarkan.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => setRefreshKey((value) => value + 1)} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-wait disabled:opacity-60"><Icon name="refresh" />{loading ? "Memuat..." : "Perbarui data"}</button>
@@ -283,7 +281,7 @@ export default function AdminPage() {
       </section>
 
       <section className="space-y-4">
-        <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Icon name="chart" /></div><div><h2 className="text-lg font-bold text-slate-900">Insight dokumentasi</h2><p className="text-sm text-slate-500">Rekap disusun dari data aktual berdasarkan tanggal dokumentasi.</p></div></div>
+        <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-700"><Icon name="chart" /></div><div><h2 className="text-lg font-bold text-slate-900">Insight dokumentasi</h2></div></div>
         <ChartCard title="1. Rekap harian" subtitle="Volume dokumentasi setiap hari, termasuk tanggal tanpa kiriman." badge="14 hari terakhir">
           {loading && !data ? <div className="mt-5 h-64 animate-pulse rounded-xl bg-slate-100" /> : <LineChart items={dailySeries} />}
         </ChartCard>
@@ -297,7 +295,7 @@ export default function AdminPage() {
 
       <section className="grid gap-6 2xl:grid-cols-2">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/30">
-          <div className="border-b border-slate-200 px-5 py-5 sm:px-6"><h2 className="text-base font-bold text-slate-900 sm:text-lg">Dokumentasi per event</h2><p className="mt-1 text-sm text-slate-500">8 event dengan dokumentasi terbanyak sepanjang data yang tersedia.</p></div>
+          <div className="border-b border-slate-200 px-5 py-5 sm:px-6"><h2 className="text-base font-bold text-slate-900 sm:text-lg">Dokumentasi per event</h2></div>
           {loading && !data ? <div className="space-y-4 p-6">{[1, 2, 3, 4].map((row) => <div key={row} className="h-8 animate-pulse rounded-lg bg-slate-100" />)}</div> : data?.events.length ? <div className="space-y-5 p-5 sm:p-6">{data.events.map((event, index) => <div key={event.nama_event}><div className="mb-2 flex items-start justify-between gap-4"><div className="flex min-w-0 items-start gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-xs font-bold text-violet-700">{index + 1}</span><div className="min-w-0"><p className="break-words text-sm font-semibold text-slate-800">{event.nama_event}</p><p className="mt-0.5 text-xs text-slate-500">{formatNumber(event.jumlah_cabang)} cabang berpartisipasi</p></div></div><span className="shrink-0 text-sm font-bold tabular-nums text-slate-900">{formatNumber(event.total_dokumentasi)}</span></div><div className="ml-10 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-violet-500" style={{ width: `${Math.max(2, (event.total_dokumentasi / highestEvent) * 100)}%` }} /></div></div>)}</div> : <EmptyState>Jumlah dokumentasi per event akan muncul setelah data pada tabel cabang tersedia.</EmptyState>}
         </div>
 
@@ -308,7 +306,7 @@ export default function AdminPage() {
       </section>
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-200/30">
-        <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"><div><h2 className="text-base font-bold text-slate-900 sm:text-lg">Dokumentasi terbaru</h2><p className="mt-1 text-sm text-slate-500">10 pengiriman terakhir dari semua tabel cabang.</p></div><Link href="/admin/rekap" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">Buka rekap lengkap <Icon name="arrow" /></Link></div>
+        <div className="flex flex-col gap-3 border-b border-slate-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6"><div><h2 className="text-base font-bold text-slate-900 sm:text-lg">Dokumentasi terbaru</h2></div><Link href="/admin/rekap" className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 hover:text-blue-800">Buka rekap lengkap <Icon name="arrow" /></Link></div>
         {loading && !data ? <div className="space-y-3 p-6">{[1, 2, 3, 4].map((row) => <div key={row} className="h-10 animate-pulse rounded-lg bg-slate-100" />)}</div> : data?.latest.length ? <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-left text-sm"><thead className="border-b border-slate-200 bg-slate-50"><tr><th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">ID</th><th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Cabang</th><th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Event</th><th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Tanggal</th><th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-wide text-slate-500">Dokumen</th></tr></thead><tbody className="divide-y divide-slate-100">{data.latest.map((item, index) => <tr key={`${item.kode_cabang}-${item.id}-${index}`} className="hover:bg-slate-50/70"><td className="px-5 py-3.5 font-medium text-slate-700">{item.id}</td><td className="px-5 py-3.5"><p className="font-semibold text-slate-800">{item.nama_cabang}</p><p className="mt-0.5 text-xs text-slate-500">{item.kode_cabang}</p></td><td className="px-5 py-3.5 text-slate-700">{item.nama_event}</td><td className="whitespace-nowrap px-5 py-3.5 text-slate-600">{displayDate(item.tanggal)}</td><td className="px-5 py-3.5"><span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold ${item.foto ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{item.foto ? "Foto tercatat" : "Tanpa foto"}</span></td></tr>)}</tbody></table></div> : <EmptyState>Belum ada dokumentasi yang bisa ditampilkan. Pastikan tabel dokumentasi cabang menggunakan kolom id, event, tanggal, dan foto.</EmptyState>}
       </section>
 
