@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 
 type EventItem = {
   id: string | number;
@@ -62,7 +63,7 @@ export default function EventAdminPage() {
       if (!response.ok) throw new Error(result.message || "Gagal mengambil data event.");
       setEventList(Array.isArray(result.data) ? result.data : []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal mengambil data event.");
+      await Swal.fire({ icon: "error", title: "Gagal memuat event", text: err instanceof Error ? err.message : "Gagal mengambil data event." });
     } finally {
       setLoading(false);
     }
@@ -116,7 +117,7 @@ export default function EventAdminPage() {
     const nama = form.nama_event.trim();
     const kode = slugify(form.kode_event);
     if (!nama || !kode) {
-      setError("Nama event dan kode event wajib diisi.");
+      await Swal.fire({ icon: "warning", title: "Data belum lengkap", text: "Nama event dan kode event wajib diisi." });
       return;
     }
 
@@ -133,24 +134,22 @@ export default function EventAdminPage() {
       });
       const result = await readResponse(response);
       if (!response.ok) throw new Error(result.message || "Gagal menyimpan event.");
-      setSuccess(result.message || "Event berhasil disimpan.");
+      await Swal.fire({ icon: "success", title: "Event tersimpan", text: result.message || "Event berhasil disimpan.", timer: 1600, showConfirmButton: false });
       setFormOpen(false);
       setEditingKode(null);
       setForm(emptyForm);
       setCodeTouched(false);
       await loadEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menyimpan event.");
+      await Swal.fire({ icon: "error", title: "Gagal menyimpan event", text: err instanceof Error ? err.message : "Gagal menyimpan event." });
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(item: EventItem) {
-    const confirmed = window.confirm(
-      `Hapus event "${item.nama_event}" (${item.kode_event})?\n\nPastikan tidak ada dokumentasi yang masih membutuhkan event ini.`
-    );
-    if (!confirmed) return;
+    const confirmation = await Swal.fire({ icon: "warning", title: "Hapus event?", text: `Hapus event "${item.nama_event}" (${item.kode_event})? Pastikan tidak ada dokumentasi yang masih membutuhkannya.`, showCancelButton: true, confirmButtonText: "Ya, hapus", cancelButtonText: "Batal", confirmButtonColor: "#dc2626", reverseButtons: true });
+    if (!confirmation.isConfirmed) return;
 
     setError("");
     setSuccess("");
@@ -163,10 +162,10 @@ export default function EventAdminPage() {
       });
       const result = await readResponse(response);
       if (!response.ok) throw new Error(result.message || "Gagal menghapus event.");
-      setSuccess(result.message || "Event berhasil dihapus.");
+      await Swal.fire({ icon: "success", title: "Event dihapus", text: result.message || "Event berhasil dihapus.", timer: 1600, showConfirmButton: false });
       await loadEvents();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menghapus event.");
+      await Swal.fire({ icon: "error", title: "Gagal menghapus event", text: err instanceof Error ? err.message : "Gagal menghapus event." });
     } finally {
       setDeletingKode(null);
     }
