@@ -111,7 +111,6 @@ export default function BranchEventConfigPage() {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || "Gagal menyimpan konfigurasi.");
       setMessage(result.message || "Konfigurasi berhasil disimpan.");
-      // Refresh the lookup data but retain the selected branch; its config state rehydrates from assignments.
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal menyimpan konfigurasi.");
     } finally {
