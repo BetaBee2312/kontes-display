@@ -843,7 +843,10 @@ export default function CabangAdminPage() {
 
               </div>
 
-              <button type="button" onClick={closeForm} disabled={saving} aria-label="Tutup form" className="rounded-lg px-2 py-1 text-2xl leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
+              <div className="flex shrink-0 items-start gap-3">
+                <img src="/logo/logoyomart.png" alt="Yomart" className="mt-1 h-auto w-20 object-contain sm:w-24" />
+                <button type="button" onClick={closeForm} disabled={saving} aria-label="Tutup form" className="rounded-lg px-2 py-1 text-2xl leading-none text-slate-400 hover:bg-slate-100 hover:text-slate-700">×</button>
+              </div>
 
             </div>
 
