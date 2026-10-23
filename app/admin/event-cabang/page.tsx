@@ -8,6 +8,7 @@ type Branch = { kode_cabang: string | number; nama_cabang: string; singkatan?: s
 type EventItem = { id: number | string; kode_event: string; nama_event: string; aktif?: number | boolean };
 type ExistingAssignment = { id_event: number | string; kode_cabang: string | number; aktif: number | boolean };
 type Config = { id_event: string; aktif: boolean; mixed?: boolean; enabledCount?: number };
+type ActiveEventGroup = { event: EventItem; branches: Branch[] };
 
 function isOn(value: number | boolean | string | undefined) {
   return value === true || Number(value) === 1;
@@ -52,6 +53,30 @@ export default function BranchEventConfigPage() {
     () => selectedBranches.map((code) => branches.find((item) => String(item.kode_cabang) === code)).filter((item): item is Branch => Boolean(item)),
     [branches, selectedBranches]
   );
+
+  const activeEventGroups = useMemo<ActiveEventGroup[]>(() => {
+    const groups = new Map<string, ActiveEventGroup>();
+    for (const assignment of assignments) {
+      if (!isOn(assignment.aktif)) continue;
+      const event = events.find((item) => Number(item.id) === Number(assignment.id_event));
+      const branch = branches.find((item) => String(item.kode_cabang) === String(assignment.kode_cabang));
+      if (!event || !branch) continue;
+
+      const eventKey = String(event.id);
+      const group = groups.get(eventKey) || { event, branches: [] };
+      if (!group.branches.some((item) => String(item.kode_cabang) === String(branch.kode_cabang))) {
+        group.branches.push(branch);
+      }
+      groups.set(eventKey, group);
+    }
+
+    return Array.from(groups.values())
+      .map((group) => ({
+        ...group,
+        branches: group.branches.sort((a, b) => a.nama_cabang.localeCompare(b.nama_cabang, "id")),
+      }))
+      .sort((a, b) => a.event.nama_event.localeCompare(b.event.nama_event, "id"));
+  }, [assignments, branches, events]);
 
   const configs = useMemo(() => {
     if (selectedBranches.length === 1) return configsByBranch[selectedBranches[0]] || [];
@@ -214,6 +239,48 @@ export default function BranchEventConfigPage() {
               <p className="text-sm text-slate-600"><span className="font-semibold text-slate-900">{selectedBranches.length}</span> cabang dipilih</p>
               {selectedBranches.length > 1 && <p className="text-xs text-blue-700">Mode bulk aktif: perubahan event akan diterapkan ke semua cabang terpilih.</p>}
             </div>
+          </section>
+
+          <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <div>
+                <h2 className="font-semibold text-slate-900">Cabang dengan Event Aktif</h2>
+                <p className="mt-1 text-sm text-slate-500">Daftar hak akses event saat ini, dikelompokkan berdasarkan event yang berjalan di masing-masing cabang.</p>
+              </div>
+              <span className="text-xs font-medium text-slate-500">{activeEventGroups.length} event aktif</span>
+            </div>
+            {activeEventGroups.length === 0 ? (
+              <div className="p-8 text-center">
+                <p className="font-medium text-slate-700">Belum ada cabang yang memiliki event aktif</p>
+                <p className="mt-1 text-sm text-slate-500">Aktifkan event di atas lalu simpan konfigurasi untuk melihat rekapnya di sini.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {activeEventGroups.map(({ event, branches: eventBranches }) => (
+                  <details key={String(event.id)} className="group" open={activeEventGroups.length <= 3}>
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-4 transition hover:bg-slate-50 sm:px-5">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">EV</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold text-slate-900">{event.nama_event}</span>
+                        <span className="mt-0.5 block font-mono text-xs text-slate-500">{event.kode_event}</span>
+                      </span>
+                      <span className="whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">{eventBranches.length} cabang</span>
+                      <svg aria-hidden="true" className="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6" /></svg>
+                    </summary>
+                    <div className="border-t border-slate-100 bg-slate-50/60 px-4 py-4 sm:px-5">
+                      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {eventBranches.map((branch) => (
+                          <div key={String(branch.kode_cabang)} className="rounded-lg border border-slate-200 bg-white px-3.5 py-3">
+                            <span className="block text-sm font-medium text-slate-800">{branch.nama_cabang}</span>
+                            <span className="mt-1 block font-mono text-xs text-slate-500">{branch.kode_cabang}{branch.singkatan ? ` · ${branch.singkatan}` : ""}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
           </section>
 
           {selectedBranchInfos.length === 0 ? (
