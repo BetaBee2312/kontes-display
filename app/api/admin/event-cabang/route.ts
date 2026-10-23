@@ -107,6 +107,24 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Terdapat jenis dokumentasi yang tidak aktif atau tidak dikenal." }, { status: 400 });
     }
 
+    const submittedEventIds = new Set(eventIds);
+    const [existingAssignments] = await connection.execute(
+      `SELECT id_event FROM tb_event_cabang WHERE kode_cabang = ?`,
+      [kodeCabang],
+    );
+    for (const row of existingAssignments as Array<{ id_event: number | string }>) {
+      if (!submittedEventIds.has(Number(row.id_event))) {
+        await connection.execute(
+          `UPDATE tb_event_cabang SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
+          [kodeCabang, Number(row.id_event)],
+        );
+        await connection.execute(
+          `UPDATE tb_event_cabang_kolom SET aktif = 0 WHERE kode_cabang = ? AND id_event = ?`,
+          [kodeCabang, Number(row.id_event)],
+        );
+      }
+    }
+
     for (const assignment of assignments) {
       const idEvent = Number(assignment.id_event);
       const active = assignment.aktif === true || Number(assignment.aktif) === 1;
