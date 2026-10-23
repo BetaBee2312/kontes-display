@@ -287,11 +287,7 @@ export default function FormPage() {
 
 
 
-        setError(
-
-          "Gagal mengambil daftar event."
-
-        );
+        void Swal.fire({ icon: "error", title: "Gagal memuat event", text: "Gagal mengambil daftar event." });
 
       } finally {
 
@@ -506,11 +502,7 @@ export default function FormPage() {
 
     if (!kode) {
 
-      setError(
-
-        "Masukkan kode cabang."
-
-      );
+      void Swal.fire({ icon: "warning", title: "Masukkan kode cabang", text: "Kode cabang harus diisi terlebih dahulu." });
 
 
 
@@ -587,11 +579,7 @@ export default function FormPage() {
 
 
 
-      setError(
-
-        "Gagal menghubungi server."
-
-      );
+      void Swal.fire({ icon: "error", title: "Server tidak dapat dihubungi", text: "Gagal menghubungi server." });
 
     } finally {
 
@@ -781,25 +769,13 @@ export default function FormPage() {
 
       const total = fotos.length + compressedFiles.length;
 
-      setMessage(
-
-        `${compressedFiles.length} foto siap diupload. Total foto: ${total}. Maksimal 2 MB per foto.`
-
-      );
+      void Swal.fire({ icon: "success", title: "Foto siap diupload", text: `${compressedFiles.length} foto siap diupload. Total foto: ${total}. Maksimal 2 MB per foto.`, timer: 1800, showConfirmButton: false });
 
     } catch (error) {
 
       console.error("COMPRESSION ERROR:", error);
 
-      setError(
-
-        error instanceof Error
-
-          ? error.message
-
-          : "Gagal mengompres foto."
-
-      );
+      void Swal.fire({ icon: "error", title: "Gagal memproses foto", text: error instanceof Error ? error.message : "Gagal mengompres foto." });
 
     } finally {
 
