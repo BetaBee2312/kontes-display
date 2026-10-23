@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
       { header: "Jenis Dokumentasi", key: "nama_kolom", width: 24 },
       { header: "Tanggal Dokumentasi", key: "tanggal", width: 18 },
       { header: "Waktu Upload", key: "waktu_upload", width: 23 },
-      { header: "Foto", key: "foto", width: 16 },
+      { header: "Foto", key: "foto", width: 22 },
     ];
     // Definisi kolom di atas sudah membuat header pada row 1.
     // Jangan addRow(header) lagi, karena akan menyisipkan satu baris header
@@ -180,8 +180,8 @@ export async function GET(request: NextRequest) {
             // berada dalam cell foto; editAs oneCell membuat gambar bergerak
             // bersama sel saat baris/kolom dipindah atau dihapus.
             detail.addImage(imageId, {
-              tl: { col: 7.08, row: rowNumber - 1 + 0.08 },
-              br: { col: 7.92, row: rowNumber - 1 + 0.92 },
+              tl: { col: 7.12, row: rowNumber - 1 + 0.10 },
+              ext: { width: 100, height: 64 },
               editAs: "oneCell",
             });
           } catch (imageError) {
