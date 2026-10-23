@@ -242,19 +242,19 @@ export default function FormPage() {
 
 
         if (!response.ok) {
-
-          setError(
-
-            result.message ||
-
-              "Gagal mengambil daftar event."
-
-          );
-
-
-
+          if (response.status === 503 || result.code === "NO_EVENTS") {
+            await Swal.fire({
+              icon: "warning",
+              title: "Cabang Tidak Terdaftar di Event",
+              text: result.message || "Cabang ini belum terdaftar di event manapun.",
+              confirmButtonText: "Mengerti",
+              confirmButtonColor: "#2563eb",
+            });
+            setEvents([]);
+            return;
+          }
+          setError(result.message || "Gagal mengambil daftar event.");
           return;
-
         }
 
 
