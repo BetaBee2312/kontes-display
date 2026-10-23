@@ -161,14 +161,15 @@ export async function PATCH(request: NextRequest) {
 
     await connection.execute(`DELETE FROM tb_event_kolom WHERE id_event = ?`, [idEvent]);
     for (const [index, field] of columns.entries()) {
-      const idField = Number(field.id_jenis_dokumentasi);
       const active = field.aktif === true || Number(field.aktif) === 1;
+      if (!active) continue;
+      const idField = Number(field.id_jenis_dokumentasi);
       const required = field.wajib === true || Number(field.wajib) === 1;
       const order = Number.isInteger(Number(field.urutan)) ? Number(field.urutan) : index;
       await connection.execute(
         `INSERT INTO tb_event_kolom (id_event, id_jenis_dokumentasi, urutan, wajib, aktif)
-         VALUES (?, ?, ?, ?, ?)`,
-        [idEvent, idField, order, required ? 1 : 0, active ? 1 : 0],
+         VALUES (?, ?, ?, ?, 1)`,
+        [idEvent, idField, order, required ? 1 : 0],
       );
     }
 
