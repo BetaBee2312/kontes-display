@@ -214,19 +214,14 @@ export default function RiwayatClient({
 
 
         <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-          <div className="text-4xl">
-            📂
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+            <svg aria-hidden="true" className="h-8 w-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H10l2 2h6.5A2.5 2.5 0 0 1 21 9.5v8a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17.5Z" /><path d="M3.5 10h17" /></svg>
           </div>
 
           <h2 className="mt-4 text-xl font-bold text-slate-900">
             Belum Ada Dokumentasi
           </h2>
 
-          <p className="mt-2 text-sm text-slate-500">
-            Semua dokumentasi pada cabang
-            ini sudah dihapus atau memang
-            belum tersedia.
-          </p>
         </div>
       </div>
     );
