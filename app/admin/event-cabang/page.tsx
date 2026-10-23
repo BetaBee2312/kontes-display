@@ -99,36 +99,6 @@ export default function BranchEventConfigPage() {
     }));
   }
 
-  async function addField() {
-    const name = fieldNameDraft.trim();
-    if (!name) { await Swal.fire({ icon: "warning", title: "Nama kolom wajib diisi", text: "Masukkan nama kolom dokumentasi terlebih dahulu." }); return; }
-    const code = name.toLowerCase().trim().normalize("NFKD")
-      .replace(/[\\u0300-\\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "_")
-      .replace(/^_+|_+$/g, "")
-      .slice(0, 50);
-    if (!code) { await Swal.fire({ icon: "warning", title: "Nama kolom tidak valid", text: "Gunakan nama yang terdiri dari huruf atau angka." }); return; }
-   
-    try {
-      const response = await fetch("/api/admin/event-cabang", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "create-field", kode_kolom: code, nama_kolom: name }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || "Gagal menambah kolom foto.");
-      setFieldNameDraft("");
-      const refresh = await fetch("/api/admin/event-cabang", { cache: "no-store" });
-      const refreshed = await refresh.json();
-      if (!refresh.ok || !refreshed.success) throw new Error(refreshed.message || "Kolom tersimpan, tetapi gagal memuat ulang data.");
-      setFields(refreshed.data.fields || []);
-      setAssignments(refreshed.data.assignments || []);
-      setFieldAssignments(refreshed.data.fieldAssignments || []);
-      setEvents(refreshed.data.events || []);
-      setBranches(refreshed.data.cabang || []);
-      await Swal.fire({ icon: "success", title: "Kolom foto ditambahkan", text: result.message || "Kolom foto berhasil ditambahkan.", timer: 1700, showConfirmButton: false });
-    } catch (e) { const message = e instanceof Error ? e.message : "Gagal menambah kolom foto."; await Swal.fire({ icon: "error", title: "Gagal menambah kolom", text: message }); }
-  }
   async function save() {
     if (!selectedBranch) { await Swal.fire({ icon: "warning", title: "Pilih cabang", text: "Pilih cabang terlebih dahulu." }); return; }
     setSaving(true);
@@ -209,11 +179,45 @@ export default function BranchEventConfigPage() {
                 <div className="rounded-xl border border-slate-200 bg-white p-4">
                   <h3 className="text-sm font-semibold text-slate-900">Jenis Kolom Foto</h3>
                   <p className="mt-1 text-xs text-slate-500">Tambahkan jenis dokumentasi baru. Setelah dibuat, aktifkan pada event cabang yang membutuhkannya.</p>
-                  <form className="mt-3 flex flex-col gap-2 sm:flex-row" onSubmit={(event) => { event.preventDefault(); void addField(); }}>
-                    <input value={fieldNameDraft} onChange={(event) => setFieldNameDraft(event.target.value)} maxLength={100} placeholder="Contoh: Foto Voucher" className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500" />
-                    <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Tambah Kolom Foto</button>
+                  <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={(event) => { event.preventDefault(); void addField(); }}>
+                    <div className="min-w-0 flex-1">
+                      <label htmlFor="new-photo-field" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500">Nama jenis dokumentasi</label>
+                      <input id="new-photo-field" value={fieldNameDraft} onChange={(event) => setFieldNameDraft(event.target.value)} maxLength={100} placeholder="Contoh: Foto Rak Promo" className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100" />
+                      <p className="mt-1.5 text-xs text-slate-500">Kode otomatis: <span className="font-mono">{draftCode || "nama_kolom"}</span></p>
+                      {duplicateField && <p className="mt-1 text-xs font-medium text-amber-700">Nama/kode sudah ada: {duplicateField.nama_kolom} ({duplicateField.kode_kolom})</p>}
+                    </div>
+                    <button type="submit" disabled={saving || !fieldNameDraft.trim() || !draftCode || Boolean(duplicateField)} className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40 sm:self-end">
+                      {saving ? "Memproses..." : "Tambah kolom"}
+                    </button>
                   </form>
-                  {fields.length > 0 && <p className="mt-2 text-xs text-slate-500">Tersedia: {fields.map((field) => field.nama_kolom).join(", ")}</p>}
+                  <div className="mt-5 border-t border-slate-100 pt-4">
+                    <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                      <h4 className="text-sm font-semibold text-slate-800">Master kolom foto</h4>
+                      <span className="text-xs text-slate-500">{fields.length} jenis terdaftar</span>
+                    </div>
+                    {fields.length === 0 ? (
+                      <p className="rounded-lg border border-dashed border-slate-200 p-4 text-sm text-slate-500">Belum ada jenis dokumentasi.</p>
+                    ) : (
+                      <div className="grid min-w-0 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {fields.map((field) => {
+                          const usageCount = fieldAssignments.filter((item) => Number(item.id_jenis_dokumentasi) === Number(field.id)).length;
+                          return (
+                            <div key={String(field.id)} className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3">
+                              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-blue-50 text-sm font-bold text-blue-700">
+                                {field.nama_kolom.trim().slice(0, 1).toUpperCase()}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-semibold text-slate-900">{field.nama_kolom}</p>
+                                <p className="mt-1 truncate font-mono text-xs text-slate-500">{field.kode_kolom}</p>
+                                <p className="mt-1 text-[11px] text-slate-400">{usageCount ? `Terkait ${usageCount} konfigurasi` : "Belum digunakan"}</p>
+                              </div>
+                              <button type="button" onClick={() => void deleteField(field)} disabled={saving || usageCount > 0} title={usageCount > 0 ? "Nonaktifkan dari konfigurasi event terlebih dahulu" : "Hapus jenis dokumentasi"} aria-label={`Hapus ${field.nama_kolom}`} className="shrink-0 rounded-lg border border-red-200 px-2.5 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30">Hapus</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {events.length === 0 && <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">Belum ada event di master data. Tambahkan event terlebih dahulu.</div>}
 
