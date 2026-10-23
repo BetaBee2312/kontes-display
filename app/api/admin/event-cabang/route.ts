@@ -34,18 +34,16 @@ export async function GET() {
       `SELECT id, kode_cabang, id_event, aktif FROM tb_event_cabang ORDER BY kode_cabang, id_event`,
     );
     const [fields] = await db.query(
-      `SELECT id, kode_kolom, nama_kolom, aktif
-       FROM tb_jenis_dokumentasi
-       ORDER BY nama_kolom ASC, id ASC`,
+      `SELECT id, kode_kolom, nama_kolom, aktif FROM tb_jenis_dokumentasi ORDER BY nama_kolom ASC, id ASC`,
     );
-    const [fieldAssignments] = await db.query(
-      `SELECT id, kode_cabang, id_event, id_jenis_dokumentasi, urutan, wajib, aktif
-       FROM tb_event_cabang_kolom
-       ORDER BY kode_cabang, id_event, urutan, id`,
+    const [eventFields] = await db.query(
+      `SELECT id, id_event, id_jenis_dokumentasi, urutan, wajib, aktif
+       FROM tb_event_kolom
+       ORDER BY id_event, urutan, id`,
     );
     return NextResponse.json({
       success: true,
-      data: { cabang: branches, events, assignments, fields, fieldAssignments },
+      data: { cabang: branches, events, assignments, fields, eventFields },
     });
   } catch (error) {
     return databaseError(error, "Gagal mengambil konfigurasi event cabang.");
@@ -82,13 +80,14 @@ export async function POST(request: NextRequest) {
       `INSERT INTO tb_jenis_dokumentasi (kode_kolom, nama_kolom, aktif) VALUES (?, ?, 1)`,
       [kode, nama],
     );
-    return NextResponse.json({ success: true, message: `Kolom foto "${nama}" berhasil ditambahkan. Aktifkan untuk cabang/event yang membutuhkan.` }, { status: 201 });
+    return NextResponse.json({ success: true, message: `Kolom foto "${nama}" berhasil ditambahkan. Atur event yang memakai kolom ini di menu Data Event.` }, { status: 201 });
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
     if (code === "ER_DUP_ENTRY") return NextResponse.json({ success: false, message: "Kode kolom tersebut sudah digunakan." }, { status: 409 });
     return databaseError(error, "Gagal menambahkan jenis kolom foto.");
   }
 }
+
 export async function DELETE(request: NextRequest) {
   try {
     if (!(await getAdminUser())) return unauthorizedAdminResponse();
@@ -97,7 +96,6 @@ export async function DELETE(request: NextRequest) {
     if (!Number.isSafeInteger(id) || id <= 0) {
       return NextResponse.json({ success: false, message: "ID jenis dokumentasi tidak valid." }, { status: 400 });
     }
-
     const [fieldRows] = await db.execute(
       `SELECT id, nama_kolom, kode_kolom FROM tb_jenis_dokumentasi WHERE id = ? LIMIT 1`,
       [id],
@@ -105,9 +103,8 @@ export async function DELETE(request: NextRequest) {
     if (!Array.isArray(fieldRows) || fieldRows.length === 0) {
       return NextResponse.json({ success: false, message: "Jenis dokumentasi tidak ditemukan." }, { status: 404 });
     }
-
     const [usageRows] = await db.execute(
-      `SELECT COUNT(*) AS total FROM tb_event_cabang_kolom WHERE id_jenis_dokumentasi = ?`,
+      `SELECT COUNT(*) AS total FROM tb_event_kolom WHERE id_jenis_dokumentasi = ?`,
       [id],
     );
     const usageCount = Number((usageRows as Array<{ total: number | string }>)[0]?.total ?? 0);
@@ -115,16 +112,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({
         success: false,
         code: "FIELD_IN_USE",
-        message: `Kolom masih terkait dengan ${usageCount} konfigurasi cabang/event. Nonaktifkan atau lepaskan kolom itu dari konfigurasi terlebih dahulu, lalu coba lagi.`,
+        message: `Kolom masih dipakai oleh ${usageCount} event. Lepaskan kolom itu dari semua event di menu Data Event terlebih dahulu.`,
       }, { status: 409 });
     }
-
     await db.execute(`DELETE FROM tb_jenis_dokumentasi WHERE id = ?`, [id]);
     return NextResponse.json({ success: true, message: "Jenis dokumentasi berhasil dihapus." });
   } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? String((error as { code?: unknown }).code ?? "") : "";
     if (code === "ER_ROW_IS_REFERENCED_2") {
-      return NextResponse.json({ success: false, message: "Kolom masih digunakan oleh konfigurasi cabang/event dan tidak dapat dihapus." }, { status: 409 });
+      return NextResponse.json({ success: false, message: "Kolom masih dipakai event dan tidak dapat dihapus." }, { status: 409 });
     }
     return databaseError(error, "Gagal menghapus jenis kolom foto.");
   }
