@@ -19,8 +19,8 @@ export type ReportFilters = {
   year: string;
   dateFrom: string;
   dateTo: string;
-  kodeCabang: string;
-  event: string;
+  kodeCabang: string[];
+  event: string[];
 };
 
 export type DocumentationRow = {
@@ -55,15 +55,16 @@ export function parseReportFilters(params: URLSearchParams): ReportFilters {
   const dateFromInput = (params.get("from") || "").trim();
   const dateToInput = (params.get("to") || "").trim();
 
+  const kodeCabang = params.getAll("kode_cabang[]").concat(params.getAll("kode_cabang")).map((item) => item.trim()).filter((item) => /^\d+$/.test(item));
+  const event = params.getAll("event[]").concat(params.getAll("event")).map((item) => item.trim().slice(0, 150)).filter(Boolean);
+
   return {
     mode,
     year,
     dateFrom: /^\d{4}-\d{2}-\d{2}$/.test(dateFromInput) ? dateFromInput : "",
     dateTo: /^\d{4}-\d{2}-\d{2}$/.test(dateToInput) ? dateToInput : "",
-    kodeCabang: /^\d+$/.test((params.get("kode_cabang") || "").trim())
-      ? (params.get("kode_cabang") || "").trim()
-      : "",
-    event: (params.get("event") || "").trim().slice(0, 150),
+    kodeCabang: Array.from(new Set(kodeCabang)),
+    event: Array.from(new Set(event)),
   };
 }
 
@@ -191,13 +192,13 @@ function buildWhere(filters: ReportFilters) {
     conditions.push("DATE(d.tanggal) <= ?");
     values.push(filters.dateTo);
   }
-  if (filters.kodeCabang) {
-    conditions.push("d.kode_cabang = ?");
-    values.push(filters.kodeCabang);
+  if (filters.kodeCabang.length > 0) {
+    conditions.push(`d.kode_cabang IN (${filters.kodeCabang.map(() => "?").join(", ")})`);
+    values.push(...filters.kodeCabang);
   }
-  if (filters.event) {
-    conditions.push("LOWER(d.nama_event) COLLATE utf8mb4_unicode_ci = LOWER(CONVERT(? USING utf8mb4)) COLLATE utf8mb4_unicode_ci");
-    values.push(filters.event);
+  if (filters.event.length > 0) {
+    conditions.push(`LOWER(d.nama_event) COLLATE utf8mb4_unicode_ci IN (${filters.event.map(() => "LOWER(CONVERT(? USING utf8mb4)) COLLATE utf8mb4_unicode_ci").join(", ")})`);
+    values.push(...filters.event);
   }
 
   return {
