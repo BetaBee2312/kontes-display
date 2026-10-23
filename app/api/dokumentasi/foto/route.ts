@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const kodeCabang = String(url.searchParams.get("kode_cabang") ?? "").trim();
     const ref = String(url.searchParams.get("ref") ?? "").trim().toLowerCase();
 
-    if (!/^\\d+$/.test(kodeCabang) || !/^[a-f0-9]{64}$/.test(ref)) {
+    if (!/^\d+$/.test(kodeCabang) || !/^[a-f0-9]{64}$/.test(ref)) {
       return NextResponse.json({ success: false, message: "Referensi foto tidak valid." }, { status: 400 });
     }
 
